@@ -96,7 +96,7 @@ class ProductController extends Controller{
                 "code" => mb_convert_encoding($group[0]['CODART'], "UTF-8", "Windows-1252"),
                 "name" => $group[0]['CCOART'],
                 "barcode" => $group[0]['EANART'],
-                "large" => mb_convert_encoding($group[0]['CP2ART']." ".$group[0]['CP5ART'], "UTF-8", "Windows-1252"),
+                "large" => mb_convert_encoding($group[0]['CP5ART'], "UTF-8", "Windows-1252"),
                 "description" => mb_convert_encoding($group[0]['DESART'], "UTF-8", "Windows-1252"),
                 "label" => mb_convert_encoding($group[0]['DEEART'], "UTF-8", "Windows-1252"),
                 "reference" => mb_convert_encoding((string)$group[0]['REFART'], "UTF-8", "Windows-1252"),
