@@ -20,7 +20,7 @@ class ProductController extends Controller{
     }
 
     public function getProducts(){
-        $query = "SELECT CODART, CCOART, DESART, DEEART, REFART, UPPART ,CP5ART, FAMART, PCOART, NPUART, PHAART, DIMART, FALART, EANART, CP1ART FROM F_ART";
+        $query = "SELECT CODART, CCOART, DESART, DEEART, REFART, UPPART ,CP5ART, CP2ART, FAMART, PCOART, NPUART, PHAART, DIMART, FALART, EANART, CP1ART FROM F_ART";
         $exec = $this->con->prepare($query);
         $exec->execute();
         $rows = collect($exec->fetchAll(\PDO::FETCH_ASSOC));
@@ -79,7 +79,7 @@ class ProductController extends Controller{
 
     public function updatedProducts(Request $request){
         $date = is_null($request->date) ? date('Y-m-d', time()) : $request->date;
-        $query = "SELECT F_ART.CODART, F_ART.CCOART, F_ART.EANART, F_ART.DESART, F_ART.DEEART, F_ART.REFART, F_ART.UPPART, F_ART.FAMART, F_ART.CP1ART, F_ART.PCOART, F_ART.NPUART, F_ART.PHAART, F_ART.DIMART, F_LTA.TARLTA, F_LTA.PRELTA, F_ART.CP5ART FROM F_ART INNER JOIN F_LTA ON F_LTA.ARTLTA = F_ART.CODART WHERE F_ART.FUMART >= #".$date."#";
+        $query = "SELECT F_ART.CODART, F_ART.CCOART, F_ART.EANART, F_ART.DESART, F_ART.DEEART, F_ART.REFART, F_ART.UPPART, F_ART.FAMART, F_ART.CP1ART, F_ART.PCOART, F_ART.NPUART, F_ART.PHAART, F_ART.DIMART, F_LTA.TARLTA, F_LTA.PRELTA, F_ART.CP2ART,F_ART.CP5ART FROM F_ART INNER JOIN F_LTA ON F_LTA.ARTLTA = F_ART.CODART WHERE F_ART.FUMART >= #".$date."#";
         $exec = $this->con->prepare($query);
         $exec->execute();
         $rows = collect($exec->fetchAll(\PDO::FETCH_ASSOC));
@@ -96,7 +96,7 @@ class ProductController extends Controller{
                 "code" => mb_convert_encoding($group[0]['CODART'], "UTF-8", "Windows-1252"),
                 "name" => $group[0]['CCOART'],
                 "barcode" => $group[0]['EANART'],
-                "large" => mb_convert_encoding($group[0]['CP5ART'], "UTF-8", "Windows-1252"),
+                "large" => mb_convert_encoding($group[0]['CP2ART']." ".$group[0]['CP5ART'], "UTF-8", "Windows-1252"),
                 "description" => mb_convert_encoding($group[0]['DESART'], "UTF-8", "Windows-1252"),
                 "label" => mb_convert_encoding($group[0]['DEEART'], "UTF-8", "Windows-1252"),
                 "reference" => mb_convert_encoding((string)$group[0]['REFART'], "UTF-8", "Windows-1252"),
