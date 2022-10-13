@@ -474,4 +474,44 @@ class ProductController extends Controller{
 
         return response()->json("ARTICULOS INSERTADOS CORRECTAMENTE");
     }
+    public function replypub(request $request){
+        $date = $request->date;
+
+        $products = "SELECT
+        F_ART.*
+        FROM ((F_ART
+        INNER JOIN F_LFA ON F_LFA.ARTLFA = F_ART.CODART)
+        INNER JOIN F_FAC ON F_FAC.TIPFAC = F_LFA.TIPLFA AND F_FAC.CODFAC = F_LFA.CODLFA)
+        WHERE F_FAC.CLIFAC = 20  AND  F_FAC.FECFAC >= #".$date."#";
+        $exec = $this->con->prepare($products);
+        $exec -> execute();
+        $articulos=$exec->fetchall(\PDO::FETCH_ASSOC);
+        if($articulos){
+        $colsTabProds = array_keys($articulos[0]);
+        
+        foreach($articulos as $art){
+            foreach($colsTabProds as $col){ $art[$col] = utf8_encode($art[$col]); }
+
+            $articulo [] = $art;
+
+        }
+        $url ="192.168.12.211:1619/access/public/product/insertpub";
+        $ch = curl_init($url);
+        $data = json_encode(["products" => $articulo]);
+        curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+        $exec = curl_exec($ch);
+        curl_close($ch);
+        return response()->json($articulo);
+    }
+        else{return response()->json("no hay articulos que exportar");}
+    }
+    public function insertpub(request $request){
+        return "si recibo algo";
+
+    }
 }
