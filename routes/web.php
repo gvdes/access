@@ -49,6 +49,8 @@ $router->group(['prefix' => 'product'], function () use ($router){
     $router->get('/movimientos', 'DevolucionesController@getAmount');
     $router->get('/compare','ProductController@compareProductVsStock');
     $router->post('/createStocks','ProductController@createStocks');
+    $router->get('/replace','ProductController@ReplaceProducts');
+    $router->get('/insertar','ProductController@insart');
 });
 
 $router->group(['prefix' => 'client'], function () use ($router){

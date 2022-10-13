@@ -350,4 +350,128 @@ class ProductController extends Controller{
                 return ["GEN" => "GEN", "EXH" => "EXH", "DES" => "CUA", "FDT" => "FDT"];
         }
     }
+    public function ReplaceProducts(Request $request){
+        $updates = $request->all();
+  
+        foreach($updates as $update){
+    
+          $original = "'".$update['original']."'";
+          $upd = "'".$update['edit']."'";
+          
+          try{
+            $upda = "UPDATE F_LFA SET ARTLFA = $upd WHERE ARTLFA = $original";
+            $exec = $this->con->prepare($upda);
+            $exec -> execute();
+            $updsto = "UPDATE F_LFR SET ARTLFR = $upd WHERE ARTLFR = $original";
+            $exec = $this->con->prepare($updsto);
+            $exec -> execute();
+            $updlta = "UPDATE F_LEN SET ARTLEN = $upd WHERE ARTLEN = $original";
+            $exec = $this->con->prepare($updlta);
+            $exec -> execute();
+            $updltr = "UPDATE F_LTR SET ARTLTR = $upd WHERE ARTLTR = $original";
+            $exec = $this->con->prepare($updltr);
+            $exec -> execute();
+            $updcin = "UPDATE F_LFB SET ARTLFB = $upd WHERE ARTLFB = $original";
+            $exec = $this->con->prepare($updcin);
+            $exec -> execute();
+            $upddev = "UPDATE F_LFD SET ARTLFD = $upd WHERE ARTLFD = $original";
+            $exec = $this->con->prepare($upddev);
+            $exec -> execute();
+            $deleteart = "DELETE FROM F_ART WHERE CODART = $original";
+            $exec = $this->con->prepare($deleteart);
+            $exec -> execute();
+            $deletetar = "DELETE FROM F_LTA WHERE ARTLTA = $original";
+            $exec = $this->con->prepare($deletetar);
+            $exec -> execute();
+            $deletesto = "DELETE FROM F_STO WHERE ARTSTO = $original";
+            $exec = $this->con->prepare($deletesto);
+            $exec -> execute();
+            $deleteean = "DELETE FROM F_EAN WHERE ARTEAN = $original";
+            $exec = $this->con->prepare($deleteean);
+            $exec -> execute();
+    
+          }catch (\PDOException $e){ die($e->getMessage());}
+          
+
+        }
+    
+    
+      return response()->json("CAMBIOS REALIZADOS EN EL SISTEMA :)");
+    }
+
+    public function insart(Request $request){
+        $articulos = $request->all();
+
+            $almacenes  = [
+                "GEN"=>"GEN",
+                "PAN"=>"PAN",
+                "BOL"=>"BOL",
+                "DES"=>"DES",
+                "CAS"=>"CAS"
+
+            ];
+
+            $tarifas = [
+                "1"=>"1",
+                "2"=>"2",
+                "3"=>"3",
+                "4"=>"4",
+                "5"=>"5",
+                "6"=>"6",
+                "7"=>"7"
+            ];
+
+        foreach($articulos as $art){
+
+            $desgen = substr($art["DESCRIPCION"],0,50);
+            $deset = substr($art["DESCRIPCION"],0,30);
+            $destic = substr($art["DESCRIPCION"],0,20);
+
+
+            $insert = "INSERT INTO F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,FALART,FUMART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            $exec = $this->con->prepare($insert);
+            $exec -> execute([
+                $art["CODIGO"],
+                $art["CB"],
+                $art["FAMILIA"],
+                $desgen,
+                $deset,
+                $destic,
+                $art["DESCRIPCION"],
+                $art["PXC1"],
+                $art["CODIGO CORTO"],
+                $art["PROVEEDOR"],
+                $art["REFERENCIA"],
+                $art["FABRICANTE"],
+                $art["COSTO"],
+                $art["FECHA ALTA"],
+                $art["FECHA MOD"],
+                $art["PXC"],
+                $art["DEF SAL"],
+                $art["DEF ENT"],
+                $art["UNIDAD MED"],
+                $art["CATEGORIA"],
+                $art["#LUCES"],
+                $art["UNIDA MED COMPRA"],
+                $art["PRO RES"],
+                $art["MEDIDAS NAV"]
+            ]);
+        foreach($almacenes as $alm){
+            
+        
+            $insertsto = "INSERT INTO F_STO (ARTSTO,ALMSTO,MINSTO,MAXSTO,ACTSTO,DISSTO) VALUES (?,?,?,?,?,?) ";
+            $exec = $this->con->prepare($insertsto);
+            $exec -> execute([$art["CODIGO"],$alm,0,0,0,0]);
+        }
+        foreach($tarifas as $price){
+            $insertlta = "INSERT INTO F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?) ";
+            $exec = $this->con->prepare($insertlta);
+            $exec -> execute([$price,$art["CODIGO"],0,0]);
+
+        }
+    }
+
+        return response()->json("ARTICULOS INSERTADOS CORRECTAMENTE");
+    }
 }
