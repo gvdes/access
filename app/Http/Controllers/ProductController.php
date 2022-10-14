@@ -495,18 +495,19 @@ class ProductController extends Controller{
             $articulo [] = $art;
 
         }
-        $url ="192.168.12.211:1619/access/public/product/insertpub";
+        $url ="192.168.90.253:1619/access/public/product/insertpub";
         $ch = curl_init($url);
-        $data = json_encode(["products" => $articulo]);
+        $data = json_encode(["products" => $art]);
         curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
         curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
-        $exec = curl_exec($ch);
+        $ex = curl_exec($ch);
         curl_close($ch);
-        return response()->json($articulo);
+        return response()->json([
+                                    "jeje" => $ex]);
     }
         else{return response()->json("no hay articulos que exportar");}
     }
