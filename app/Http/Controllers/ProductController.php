@@ -491,28 +491,33 @@ class ProductController extends Controller{
         
         foreach($articulos as $art){
             foreach($colsTabProds as $col){ $art[$col] = utf8_encode($art[$col]); }
-
-            $articulo [] = $art;
+            $url ="192.168.90.253:1619/access/public/product/insertpub";
+            $ch = curl_init($url);
+            $data = json_encode(["products" => $art]);
+            curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+            $ex = curl_exec($ch);
+            curl_close($ch);
 
         }
-        $url ="192.168.90.253:1619/access/public/product/insertpub";
-        $ch = curl_init($url);
-        $data = json_encode(["products" => $art]);
-        curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
-        curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
-        $ex = curl_exec($ch);
-        curl_close($ch);
+        
         return response()->json([
                                     "jeje" => $ex]);
     }
         else{return response()->json("no hay articulos que exportar");}
     }
     public function insertpub(request $request){
-        return "si recibo algo";
+        $codart = $request->products["CODART"];
+
+        $art = "DELETE FROM F_ART WHERE CODART = ?";
+        $exec = $this->con->prepare($art);
+        $exec -> execute([$request->products["CODART"]]);
+
+        return $artic;
 
     }
 }
