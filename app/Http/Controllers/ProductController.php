@@ -513,9 +513,19 @@ class ProductController extends Controller{
     public function insertpub(request $request){
         $codart = $request->products["CODART"];
 
-        $art = "DELETE FROM F_ART WHERE CODART = ?";
+        $art = "SELECT * FROM F_ART WHERE CODART = ?";
         $exec = $this->con->prepare($art);
         $exec -> execute([$request->products["CODART"]]);
+        $articulos=$exec->fetchall(\PDO::FETCH_ASSOC);
+        if($articulos){
+            $update = "UPDATE F_ART SET FUMART = NOW() WHERE CODART = ?  ";
+            $exec = $this->con->prepare($art);
+            $exec -> execute([$request->products["CODART"]]);
+        }else{
+            $insert = "INSERT INTO F_ART (CODART) VALUES (?)";
+            $exec = $this->con->prepare($art);
+            $exec -> execute([$request->products["CODART"]]);
+        }
 
         return $artic;
 
