@@ -511,23 +511,48 @@ class ProductController extends Controller{
         else{return response()->json("no hay articulos que exportar");}
     }
     public function insertpub(request $request){
-        $codart = $request->products["CODART"];
-
-        $art = "SELECT * FROM F_ART WHERE CODART = ?";
+        $cost = ($request->products["PCOART"]*1.05);
+        $eanart =$request->products["EANART"];
+        $famart =$request->products["FAMART"];
+        $uppart =$request->products["UPPART"];
+        $cp1art =$request->products["CP1ART"];
+        $art = "SELECT COUNT(CODART) AS CANTIDAD FROM F_ART WHERE = ?";
         $exec = $this->con->prepare($art);
         $exec -> execute([$request->products["CODART"]]);
         $articulos=$exec->fetchall(\PDO::FETCH_ASSOC);
-        if($articulos){
-            $update = "UPDATE F_ART SET FUMART = NOW() WHERE CODART = ?  ";
-            $exec = $this->con->prepare($art);
-            $exec -> execute([$request->products["CODART"]]);
-        }else{
-            $insert = "INSERT INTO F_ART (CODART) VALUES (?)";
-            $exec = $this->con->prepare($art);
-            $exec -> execute([$request->products["CODART"]]);
-        }
 
-        return $artic;
+            $artupd = "UPDATE  F_ART SET FUMART = DATE(), PCOART = $cost, EANART = $eanart, FAMART = $famart, UPPART = $uppart, CP1ART = $cp1art WHERE CODART = (?)";
+            $exec = $this->con->prepare($artupd);
+            $exec -> execute([$request->products["CODART"]]); 
 
+            $artid = "INSERT INTO  F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART,FALART,FUMART
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATE(),DATE())";
+            $exec = $this->con->prepare($artid);
+            $exec -> execute([
+                $request->products["CODART"],
+                $request->products["EANART"],
+                $request->products["FAMART"],
+                $request->products["DESART"],
+                $request->products["DEEART"],
+                $request->products["DETART"],
+                $request->products["DLAART"],
+                $request->products["EQUART"],
+                $request->products["CCOART"],
+                $request->products["PHAART"],
+                $request->products["REFART"],
+                $request->products["FTEART"],
+                ($request->products["PCOART"]*1.05),
+                $request->products["UPPART"],
+                $request->products["CANART"],
+                $request->products["CAEART"],
+                $request->products["UMEART"],
+                $request->products["CP1ART"],
+                $request->products["CP2ART"],
+                $request->products["CP3ART"],
+                $request->products["CP4ART"],
+                $request->products["CP5ART"],
+
+        ]);
+        
     }
 }
