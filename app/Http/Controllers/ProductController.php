@@ -428,8 +428,8 @@ class ProductController extends Controller{
             $destic = substr($art["DESCRIPCION"],0,20);
 
 
-            $insert = "INSERT INTO F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,FALART,FUMART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            $insert = "INSERT INTO F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,FALART,FUMART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART,MPTART,UEQART
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,Peso)";
             $exec = $this->con->prepare($insert);
             $exec -> execute([
                 $art["CODIGO"],
@@ -477,20 +477,20 @@ class ProductController extends Controller{
     public function replypub(request $request){
         $date = $request->date;
 
-        $products = "SELECT
-        F_ART.*
-        FROM ((F_ART
-        INNER JOIN F_LFA ON F_LFA.ARTLFA = F_ART.CODART)
-        INNER JOIN F_FAC ON F_FAC.TIPFAC = F_LFA.TIPLFA AND F_FAC.CODFAC = F_LFA.CODLFA)
-        WHERE F_FAC.CLIFAC = 20  AND  F_FAC.FECFAC >= #".$date."#";
+        $products = "SELECT F_ART.*, F_LTA.TARLTA, F_LTA.PRELTA FROM (((F_ART INNER JOIN F_LTA ON F_LTA.ARTLTA = F_ART.CODART) INNER JOIN F_LFA ON F_LFA.ARTLFA = F_ART.CODART) INNER JOIN F_FAC ON F_FAC.TIPFAC = F_LFA.TIPLFA AND F_FAC.CODFAC = F_LFA.CODLFA) WHERE F_FAC.CLIFAC = 20  AND  F_FAC.FECFAC >= #".$date."#";
         $exec = $this->con->prepare($products);
         $exec -> execute();
         $articulos=$exec->fetchall(\PDO::FETCH_ASSOC);
         if($articulos){
+
+        
         $colsTabProds = array_keys($articulos[0]);
         
         foreach($articulos as $art){
             foreach($colsTabProds as $col){ $art[$col] = utf8_encode($art[$col]); }
+
+            
+                
             $url ="192.168.90.253:1619/access/public/product/insertpub";
             $ch = curl_init($url);
             $data = json_encode(["products" => $art]);
@@ -503,8 +503,8 @@ class ProductController extends Controller{
             $ex = curl_exec($ch);
             curl_close($ch);
 
-        }
         
+    }
         return response()->json([
                                     "jeje" => $ex]);
     }
@@ -525,8 +525,8 @@ class ProductController extends Controller{
             $exec = $this->con->prepare($artupd);
             $exec -> execute([$request->products["CODART"]]); 
 
-            $artid = "INSERT INTO  F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART,FALART,FUMART
-            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATE(),DATE())";
+            $artid = "INSERT INTO  F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART,FALART,FUMART,MPTART,UEQART
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATE(),DATE(),?,?)";
             $exec = $this->con->prepare($artid);
             $exec -> execute([
                 $request->products["CODART"],
@@ -551,6 +551,8 @@ class ProductController extends Controller{
                 $request->products["CP3ART"],
                 $request->products["CP4ART"],
                 $request->products["CP5ART"],
+                $request->products["MPTART"],
+                $request->products["UEQART"],
 
         ]);
         
