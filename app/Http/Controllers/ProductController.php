@@ -506,7 +506,7 @@ class ProductController extends Controller{
         
     }
         return response()->json(["products" => $ex,
-                                 "prices" => $$dat
+                                 "prices" => $dat
     ]);
     }
         else{return response()->json("no hay articulos que exportar");}
