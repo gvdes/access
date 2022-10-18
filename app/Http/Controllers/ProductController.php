@@ -477,7 +477,7 @@ class ProductController extends Controller{
     public function replypub(request $request){
         $date = $request->date;
 
-        $products = "SELECT F_ART.*, F_LTA.TARLTA, F_LTA.PRELTA FROM (((F_ART INNER JOIN F_LTA ON F_LTA.ARTLTA = F_ART.CODART) INNER JOIN F_LFA ON F_LFA.ARTLFA = F_ART.CODART) INNER JOIN F_FAC ON F_FAC.TIPFAC = F_LFA.TIPLFA AND F_FAC.CODFAC = F_LFA.CODLFA) WHERE F_FAC.CLIFAC = 20  AND  F_FAC.FECFAC >= #".$date."#";
+        $products = "SELECT F_ART.*, F_LTA.TARLTA, F_LTA.PRELTA FROM (((F_ART INNER JOIN F_LTA ON F_LTA.ARTLTA = F_ART.CODART) INNER JOIN F_LFA ON F_LFA.ARTLFA = F_ART.CODART) INNER JOIN F_FAC ON F_FAC.TIPFAC = F_LFA.TIPLFA AND F_FAC.CODFAC = F_LFA.CODLFA) WHERE F_FAC.CLIFAC = 20 AND F_LTA.TARLTA NOT IN (7) AND  F_FAC.FECFAC >= #".$date."#";
         $exec = $this->con->prepare($products);
         $exec -> execute();
         $articulos=$exec->fetchall(\PDO::FETCH_ASSOC);
@@ -553,8 +553,9 @@ class ProductController extends Controller{
                 $request->products["CP5ART"],
                 $request->products["MPTART"],
                 $request->products["UEQART"],
-
-        ]);
-        
+                                ]);
+            $insertprices = "INSERT INTO F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
+            $exec = $this->con->prepare($insertsto);
+            $exec -> execute([$request->products["TARLTA"],$request->products["CODART"],0,$request->products["CODART"],]);
     }
 }
