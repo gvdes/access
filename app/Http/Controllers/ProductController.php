@@ -577,20 +577,63 @@ class ProductController extends Controller{
                 $request->products["MPTART"],
                 $request->products["UEQART"],
                                 ]);
+                $almacenes  = [
+                    "GEN"=>"GEN",
+                    "DES"=>"PAN",
+                    "EMP"=>"BOL",
+                    "EXH"=>"DES",
+                    "FDT"=>"CAS"
+    
+                ];
+                foreach($almacenes as $alm){
+            
+        
+                    $insertsto = "INSERT INTO F_STO (ARTSTO,ALMSTO,MINSTO,MAXSTO,ACTSTO,DISSTO) VALUES (?,?,?,?,?,?) ";
+                    $exec = $this->con->prepare($insertsto);
+                    $exec -> execute([$request->products["CODART"],$alm,0,0,0,0]);
+                }
+
     }
 
     public function insertpricespub(request $request){
-      $updprices =   $request->prices["PRELTA"];
         
-        // $upd = "UPDATE F_LTA SET PRELTA = $updprices WHERE ARTLTA = ? AND TARLTA = ?";
-        // $exec = $this->con->prepare($upd);
-        // $exec -> execute([$request->prices["ARTLTA"], $request->prices["TARLTA"]]);
+
+        if($request->prices["TARLTA"] > 1){
+            $updprices =   round($request->prices["PRELTA"]*1.05);
+            $upd = "UPDATE F_LTA SET PRELTA = $updprices WHERE ARTLTA = ? AND TARLTA = ?";
+            $exec = $this->con->prepare($upd);
+            $exec -> execute([$request->prices["ARTLTA"], $request->prices["TARLTA"]]);
 
         $insert = "INSERT INTO  F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
         $exec = $this->con->prepare($insert);
-        $exec -> execute([$request->prices["TARLTA"],$request->prices["ARTLTA"],0,$request->prices["PRELTA"]]);
+        $exec -> execute([$request->prices["TARLTA"],$request->prices["ARTLTA"],0,round($request->prices["PRELTA"] * 1.05)]);}
         
+        if($request->prices["TARLTA"] == 2){
+            $pricesnew =   round($request->prices["PRELTA"]*1.05);
         
+            if(($pricesnew >= 0) && ($pricesnew <= 50)){
+                $prai = $pricesnew + 5;
+            }elseif(($pricesnew >= 51) && ($pricesnew <= 100)){
+                $prai = $pricesnew + 10;
+            }elseif(($pricesnew >= 101) && ($pricesnew <= 500)){
+                $prai = $pricesnew + 20;
+            }elseif(($pricesnew >= 501) && ($pricesnew <= 1000)){
+                $prai = $pricesnew + 50;
+            }elseif($pricesnew > 1001){
+                $prai =  $pricesnew + 100; 
+            }
+        
+            $upda = "UPDATE F_LTA SET PRELTA = $prai WHERE ARTLTA = ? AND TARLTA = 1";
+            $exec = $this->con->prepare($upda);
+            $exec -> execute([$request->prices["ARTLTA"]]);
+
+            $inserta = "INSERT INTO  F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
+            $exec = $this->con->prepare($inserta);
+            $exec -> execute([1,$request->prices["ARTLTA"],0,$prai]);
+                        
+        
+
+        }
 
         
     }
