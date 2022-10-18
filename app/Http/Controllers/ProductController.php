@@ -429,7 +429,7 @@ class ProductController extends Controller{
 
 
             $insert = "INSERT INTO F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,FALART,FUMART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART,MPTART,UEQART
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,Peso)";
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,'Peso')";
             $exec = $this->con->prepare($insert);
             $exec -> execute([
                 $art["CODIGO"],
@@ -477,12 +477,12 @@ class ProductController extends Controller{
     public function replypub(request $request){
         $date = $request->date;
 
-        $products = "SELECT F_ART.*, F_LTA.TARLTA AS TARLTA, F_LTA.PRELTA AS PRELTA FROM (((F_ART INNER JOIN F_LTA ON F_LTA.ARTLTA = F_ART.CODART) INNER JOIN F_LFA ON F_LFA.ARTLFA = F_ART.CODART) INNER JOIN F_FAC ON F_FAC.TIPFAC = F_LFA.TIPLFA AND F_FAC.CODFAC = F_LFA.CODLFA) WHERE F_FAC.CLIFAC = 20 AND F_LTA.TARLTA NOT IN (7) AND  F_FAC.FECFAC >= #".$date."#";
+        $products = "SELECT F_ART.* FROM ((F_ART  INNER JOIN F_LFA ON F_LFA.ARTLFA = F_ART.CODART) INNER JOIN F_FAC ON F_FAC.TIPFAC = F_LFA.TIPLFA AND F_FAC.CODFAC = F_LFA.CODLFA) WHERE F_FAC.CLIFAC = 20  AND  F_FAC.FECFAC >= #".$date."#";
         $exec = $this->con->prepare($products);
         $exec -> execute();
         $articulos=$exec->fetchall(\PDO::FETCH_ASSOC);
         if($articulos){
-
+        $dat =$this->replyprices($date);
         
         $colsTabProds = array_keys($articulos[0]);
         
@@ -505,9 +505,32 @@ class ProductController extends Controller{
 
         
     }
-        return response()->json(["jeje" => $ex]);
+        return response()->json(["products" => $ex,
+                                 "prices" => $$dat
+    ]);
     }
         else{return response()->json("no hay articulos que exportar");}
+    }
+    public function replyprices($date){
+        $prices = "SELECT F_LTA.* FROM ((F_LTA  INNER JOIN F_LFA ON F_LFA.ARTLFA = F_LTA.ARTLTA) INNER JOIN F_FAC ON F_FAC.TIPFAC = F_LFA.TIPLFA AND F_FAC.CODFAC = F_LFA.CODLFA) WHERE F_FAC.CLIFAC = 20 AND F_LTA.TARLTA NOT IN (7) AND  F_FAC.FECFAC >= #".$date."#";
+        $exec = $this->con->prepare($prices);
+        $exec -> execute();
+        $precios=$exec->fetchall(\PDO::FETCH_ASSOC);
+        foreach($precios as $pre){
+            $url ="192.168.90.253:1619/access/public/product/insertpricespub";
+            $ch = curl_init($url);
+            $data = json_encode(["prices" => $pre]);
+            curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+            $ex = curl_exec($ch);
+            curl_close($ch);
+            return response()->json($ex);
+        }
+
     }
     public function insertpub(request $request){
         $cost = ($request->products["PCOART"]*1.05);
@@ -553,8 +576,9 @@ class ProductController extends Controller{
                 $request->products["MPTART"],
                 $request->products["UEQART"],
                                 ]);
-            $insertprices = "INSERT INTO F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
-            $exec = $this->con->prepare($insertsto);
-            $exec -> execute([$request->products["TARLTA"],$request->products["CODART"],0,$request->products["PRELTA"],]);
+    }
+
+    public function insertpricespub(request $request){
+        return "sirecibo";
     }
 }
