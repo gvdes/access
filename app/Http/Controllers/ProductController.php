@@ -579,6 +579,18 @@ class ProductController extends Controller{
     }
 
     public function insertpricespub(request $request){
-        return "sirecibo";
+      $updprices =   $request->prices["PRELTA"];
+        
+        // $upd = "UPDATE F_LTA SET PRELTA = $updprices WHERE ARTLTA = ? AND TARLTA = ?";
+        // $exec = $this->con->prepare($upd);
+        // $exec -> execute([$request->prices["ARTLTA"], $request->prices["TARLTA"]]);
+
+        $insert = "INSERT INTO  F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
+        $exec = $this->con->prepare($insert);
+        $exec -> execute([$request->prices["TARLTA"],$request->prices["ARTLTA"],0,$request->prices["PRELTA"]]);
+        
+        
+
+        
     }
 }
