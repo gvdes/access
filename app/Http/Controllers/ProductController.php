@@ -517,6 +517,7 @@ class ProductController extends Controller{
         $exec -> execute();
         $precios=$exec->fetchall(\PDO::FETCH_ASSOC);
         foreach($precios as $pre){
+        
             $url ="192.168.90.253:1619/access/public/product/insertpricespub";
             $ch = curl_init($url);
             $data = json_encode(["prices" => $pre]);
@@ -528,9 +529,9 @@ class ProductController extends Controller{
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
             $ex = curl_exec($ch);
             curl_close($ch);
-            return response()->json($ex);
+            
         }
-
+        return response()->json($pre);
     }
     public function insertpub(request $request){
         $cost = ($request->products["PCOART"]*1.05);
