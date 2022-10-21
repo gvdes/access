@@ -86,52 +86,53 @@ class ProductController extends Controller{
     }
 
     public function updatedProducts(Request $request){
-        $date = is_null($request->date) ? date('Y-m-d', time()) : $request->date;
-        $query = "SELECT F_ART.CODART, F_ART.CCOART, F_ART.EANART, F_ART.DESART, F_ART.DEEART, F_ART.REFART, F_ART.UPPART, F_ART.FAMART, F_ART.CP1ART, F_ART.PCOART, F_ART.NPUART, F_ART.PHAART, F_ART.DIMART, F_LTA.TARLTA, F_LTA.PRELTA, F_ART.CP2ART,F_ART.CP5ART,F_ART.CP4ART FROM F_ART INNER JOIN F_LTA ON F_LTA.ARTLTA = F_ART.CODART WHERE F_ART.FUMART >= #".$date."#";
-        $exec = $this->con->prepare($query);
-        $exec->execute();
-        $rows = collect($exec->fetchAll(\PDO::FETCH_ASSOC));
-        $products = $rows->groupBy('CODART')->map(function($group){
-            $prices = $group->map(function($el){
+        try {
+            //code...
+            $date = is_null($request->date) ? date('Y-m-d', time()) : $request->date;
+            $query = "SELECT F_ART.CODART, F_ART.CCOART, F_ART.EANART, F_ART.DESART, F_ART.DEEART, F_ART.REFART, F_ART.UPPART, F_ART.FAMART, F_ART.CP1ART, F_ART.PCOART, F_ART.NPUART, F_ART.PHAART, F_ART.DIMART, F_LTA.TARLTA, F_LTA.PRELTA, F_ART.CP2ART,F_ART.CP5ART,F_ART.CP4ART FROM F_ART INNER JOIN F_LTA ON F_LTA.ARTLTA = F_ART.CODART WHERE F_ART.FUMART >= #".$date."#";
+            $exec = $this->con->prepare($query);
+            $exec->execute();
+            $rows = collect($exec->fetchAll(\PDO::FETCH_ASSOC));
+
+            $products = $rows->groupBy('CODART')->map(function($group){
+                $prices = $group->map(function($el){
+                    return [
+                        "_type" => $el['TARLTA'],
+                        "price" => $el['PRELTA']
+                    ];
+                });
+                $dimensions = explode('*', $group[0]['DIMART']);
+                $_status = $group[0]['NPUART'] == 0 ? 1 : 5;
+
+                $refillable = $group[0]['CP4ART'] == "SI" ? 1 : 0;
+        
                 return [
-                    "_type" => $el['TARLTA'],
-                    "price" => $el['PRELTA']
+                    "code" => mb_convert_encoding($group[0]['CODART'], "UTF-8", "Windows-1252"),
+                    "name" => $group[0]['CCOART'],
+                    "barcode" => $group[0]['EANART'],
+                    "large" => mb_convert_encoding($group[0]['CP2ART']." ".$group[0]['CP5ART'], "UTF-8", "Windows-1252"),
+                    "description" => mb_convert_encoding($group[0]['DESART'], "UTF-8", "Windows-1252"),
+                    "label" => mb_convert_encoding($group[0]['DEEART'], "UTF-8", "Windows-1252"),
+                    "reference" => mb_convert_encoding((string)$group[0]['REFART'], "UTF-8", "Windows-1252"),
+                    "cost" => $group[0]['PCOART'],
+                    "dimensions" =>json_encode([
+                        "length" => count($dimensions)>0 ? $dimensions[0] : '',
+                        "height" => count($dimensions)>1 ? $dimensions[1] : '',
+                        "width" => count($dimensions)>2 ? $dimensions[2] : ''
+                    ]),
+                    "pieces" => explode(" ", $group[0]['UPPART'])[0] ? intval(explode(" ", $group[0]['UPPART'])[0]) : 0,
+                    "_category" => mb_convert_encoding($group[0]['CP1ART'], "UTF-8", "Windows-1252"),
+                    "_family" => mb_convert_encoding($group[0]['FAMART'], "UTF-8", "Windows-1252"),
+                    "_status" => $_status,
+                    "_provider" => intval($group[0]['PHAART']),
+                    "_unit" => 1,
+                    "refillable" => $refillable,
+                    "prices" => $prices
                 ];
-            });
-            $dimensions = explode('*', $group[0]['DIMART']);
-            $_status = $group[0]['NPUART'] == 0 ? 1 : 5;
-            if(is_null($group[0]['CP4ART'])){
-                $refillable = null;
-            }elseif($group[0]['CP4ART'] == "SI"){
-                $refillable = 1;
-            }elseif($group[0]['CP4ART'] == "NO"){
-                $refillable = 0;
-            }
-            return [
-                "code" => mb_convert_encoding($group[0]['CODART'], "UTF-8", "Windows-1252"),
-                "name" => $group[0]['CCOART'],
-                "barcode" => $group[0]['EANART'],
-                "large" => mb_convert_encoding($group[0]['CP2ART']." ".$group[0]['CP5ART'], "UTF-8", "Windows-1252"),
-                "description" => mb_convert_encoding($group[0]['DESART'], "UTF-8", "Windows-1252"),
-                "label" => mb_convert_encoding($group[0]['DEEART'], "UTF-8", "Windows-1252"),
-                "reference" => mb_convert_encoding((string)$group[0]['REFART'], "UTF-8", "Windows-1252"),
-                "cost" => $group[0]['PCOART'],
-                "dimensions" =>json_encode([
-                    "length" => count($dimensions)>0 ? $dimensions[0] : '',
-                    "height" => count($dimensions)>1 ? $dimensions[1] : '',
-                    "width" => count($dimensions)>2 ? $dimensions[2] : ''
-                ]),
-                "pieces" => explode(" ", $group[0]['UPPART'])[0] ? intval(explode(" ", $group[0]['UPPART'])[0]) : 0,
-                "_category" => mb_convert_encoding($group[0]['CP1ART'], "UTF-8", "Windows-1252"),
-                "_family" => mb_convert_encoding($group[0]['FAMART'], "UTF-8", "Windows-1252"),
-                "_status" => $_status,
-                "_provider" => intval($group[0]['PHAART']),
-                "_unit" => 1,
-                "refillable" => $refillable,
-                "prices" => $prices
-            ];
-        })->values()->all();
-        return $products;
+            })->values()->all();
+
+            return $products;
+        } catch (\Exception $e) { return response()->json($e->getMessage(),500); } 
     }
 
     public function UpdatedProductAccess(Request $request){
