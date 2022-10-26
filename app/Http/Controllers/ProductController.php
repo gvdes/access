@@ -417,6 +417,12 @@ class ProductController extends Controller{
     }
 
     public function insart(Request $request){
+        $goals=[
+            "INSERTADOS"=>[],
+            "ACTUALIZADOS"=>[]
+        ];
+        $fail=[];
+
         $articulos = $request->all();
 
             $almacenes  = [
@@ -425,7 +431,6 @@ class ProductController extends Controller{
                 "BOL"=>"BOL",
                 "DES"=>"DES",
                 "CAS"=>"CAS"
-
             ];
 
             $tarifas = [
@@ -438,58 +443,104 @@ class ProductController extends Controller{
                 "7"=>"7"
             ];
 
-        foreach($articulos as $art){
-
-            $desgen = substr($art["DESCRIPCION"],0,50);
-            $deset = substr($art["DESCRIPCION"],0,30);
-            $destic = substr($art["DESCRIPCION"],0,20);
-
-
-            $insert = "INSERT INTO F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,FALART,FUMART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART,MPTART,UEQART
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,'Peso')";
-            $exec = $this->con->prepare($insert);
-            $exec -> execute([
-                $art["CODIGO"],
-                $art["CB"],
-                $art["FAMILIA"],
-                $desgen,
-                $deset,
-                $destic,
-                $art["DESCRIPCION"],
-                $art["PXC1"],
-                $art["CODIGO CORTO"],
-                $art["PROVEEDOR"],
-                $art["REFERENCIA"],
-                $art["FABRICANTE"],
-                $art["COSTO"],
-                $art["FECHA ALTA"],
-                $art["FECHA MOD"],
-                $art["PXC"],
-                $art["DEF SAL"],
-                $art["DEF ENT"],
-                $art["UNIDAD MED"],
-                $art["CATEGORIA"],
-                $art["#LUCES"],
-                $art["UNIDA MED COMPRA"],
-                $art["PRO RES"],
-                $art["MEDIDAS NAV"]
-            ]);
-        foreach($almacenes as $alm){
             
-        
-            $insertsto = "INSERT INTO F_STO (ARTSTO,ALMSTO,MINSTO,MAXSTO,ACTSTO,DISSTO) VALUES (?,?,?,?,?,?) ";
-            $exec = $this->con->prepare($insertsto);
-            $exec -> execute([$art["CODIGO"],$alm,0,0,0,0]);
-        }
-        foreach($tarifas as $price){
-            $insertlta = "INSERT INTO F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?) ";
-            $exec = $this->con->prepare($insertlta);
-            $exec -> execute([$price,$art["CODIGO"],0,0]);
+        foreach($articulos as $art){
+            $deslarga = trim($art["DESCRIPCION"]);
+            $desgen = trim(substr($art["DESCRIPCION"],0,50));
+            $deset = trim(substr($art["DESCRIPCION"],0,30));
+            $destic = trim(substr($art["DESCRIPCION"],0,20));
+            $famart = trim($art["FAMILIA"]);
+            $cat = trim($art["CATEGORIA"]);
+            $date = date("Y/m/d H:i");//se gerera la fecha de el dia de hoy con  formato de fecha y hora
+            $date_format = date("d/m/Y");
+            $barcode = $art["CB"] == "\"\""? null : $art["CB"];
+            $cost =$art["COSTO"] == null ? 0 : $art["COSTO"];
+            $medidas = $art["MEDIDAS NAV"] == "\"\"" ? null : $art["MEDIDAS NAV"];
+            $luces = $art["#LUCES"] == "\"\"" ? null : $art["#LUCES"];
+            $PXC = $art["PXC"];
+            $refart = $art["REFERENCIA"];
+            $cp3art = trim($art["UNIDA MED COMPRA"]);
 
-        }
-    }
+            $articulo  = [              
+                    $art["CODIGO"],
+                    $barcode,
+                    $famart,
+                    $desgen,
+                    $deset,
+                    $destic,
+                    $deslarga,
+                    $art["PXC"],
+                    $art["CODIGO CORTO"],
+                    $art["PROVEEDOR"],
+                    $art["REFERENCIA"],
+                    $art["FABRICANTE"],
+                    $cost,
+                    $date_format,
+                    $date_format,
+                    $art["PXC"],
+                    1,
+                    1,
+                    1,
+                    $cat,
+                    $luces,
+                    $art["UNIDA MED COMPRA"],
+                    $art["PRO RES"],
+                    $medidas,
+                    0,
+                    "Peso"
+            ];
 
-        return response()->json("ARTICULOS INSERTADOS CORRECTAMENTE");
+            $articul = "SELECT CODART, EANART, CCOART FROM F_ART WHERE CODART = ? ";
+            $exec = $this->con->prepare($articul);
+            $exec -> execute([$art["CODIGO"]]);
+            $arti=$exec->fetchall(\PDO::FETCH_ASSOC);
+            if($arti){
+                foreach($arti as $arc){//actualizar en factusol
+                    $update = "UPDATE F_ART SET FAMART = "."'".$famart."'"." , CP1ART = "."'".$cat."'"."  , FUMART = "."'".$date_format."'".", EANART = $barcode, PCOART = $cost, UPPART = $PXC , EQUART = $PXC, REFART = "."'".$refart."'"."  , CP3ART = "."'".$cp3art."'"."  WHERE CODART = ? "; 
+                    $exec = $this->con->prepare($update);
+                    $exec -> execute([$arc["CODART"]]);
+                    $goals["ACTUALIZADOS"][]="Se actualizo el modelo  ".$arc["CODART"]." con codigo de barras ".$arc["EANART"];}
+            }else{
+                $corto = "SELECT CODART, EANART, CCOART FROM F_ART WHERE CCOART = ? ";
+                $exec = $this->con->prepare($corto);
+                $exec -> execute([$art["CODIGO CORTO"]]);
+                $short=$exec->fetchall(\PDO::FETCH_ASSOC);
+                if($short){
+                    foreach($short as $cort)
+                        $fail[]="codigo corto ".$cort["CCOART"]." esta asignado ya a ".$cort["CODART"];
+                }else{                       
+                    $ean = "SELECT CODART, EANART, CCOART FROM F_ART WHERE EANART = ? ";
+                    $exec = $this->con->prepare($corto);
+                    $exec -> execute([$art["CB"]]);
+                    $eana=$exec->fetchall(\PDO::FETCH_ASSOC);
+                    if($eana){
+                        foreach($eana as $eanart)
+                            $fail[]="codigo de barras ".$eanart["EANART"]." esta asignado ya a ".$eanart["CODART"];
+                    }else{                          
+                        $insert = "INSERT INTO F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,FALART,FUMART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART,MPTART,UEQART
+                        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                        $exec = $this->con->prepare($insert);
+                        $exec -> execute($articulo);
+                        foreach($almacenes as $alm){
+                            $insertsto = "INSERT INTO F_STO (ARTSTO,ALMSTO,MINSTO,MAXSTO,ACTSTO,DISSTO) VALUES (?,?,?,?,?,?) ";
+                            $exec = $this->con->prepare($insertsto);
+                            $exec -> execute([$art["CODIGO"],$alm,0,0,0,0]);
+                        }
+                        foreach($tarifas as $price){
+                            $insertlta = "INSERT INTO F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?) ";
+                            $exec = $this->con->prepare($insertlta);
+                            $exec -> execute([$price,$art["CODIGO"],0,0]);
+                        }
+                        $goals["INSERTADOS"][]="SE INSERTARON EL ARTICULO ".$art["CODIGO"]." CON EXITO";
+                    }
+                }           
+            }
+        }
+    
+        return response()->json([
+            "GOALS" =>$goals,
+            "FAILS" =>$fail]);
+            
     }
     public function replypub(request $request){
         $date = $request->date;
