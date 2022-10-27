@@ -687,7 +687,7 @@ class ProductController extends Controller{
                 $prai = $pricesnew + 20;
             }elseif(($pricesnew >= 501) && ($pricesnew <= 1000)){
                 $prai = $pricesnew + 50;
-            }elseif($pricesnew > 1001){
+            }elseif($pricesnew >= 1001){
                 $prai =  $pricesnew + 100; 
             }
         
@@ -698,11 +698,85 @@ class ProductController extends Controller{
             $inserta = "INSERT INTO  F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
             $exec = $this->con->prepare($inserta);
             $exec -> execute([1,$request->prices["ARTLTA"],0,$prai]);
-                        
-        
+        }     
+    }
+    public function pricesart(Request $request){
+        $date = date("Y/m/d H:i");//se gerera la fecha de el dia de hoy con  formato de fecha y hora
+        $date_format = date("d/m/Y");
+        $prices = $request->all();
+        $goals = [];
+        $fail = [];
 
+        foreach($prices as $price){
+            $modelo = $price["MODELO"];
+            $costo = round($price["COSTO "],2);
+            $aaa = round($price["AAA"],2);
+            $centro = round($price["CENTRO"],0);
+            $especial = round($price["ESPECIAL"],0);
+            $caja = round($price["CAJA"],0);
+            $docena = round($price["DOCENA"],0);
+            $mayoreo = round($price["MAYOREO"],0);
+            if(($mayoreo >= 0) && ($mayoreo <= 50)){
+                $menudeo = $mayoreo + 5;
+            }elseif(($mayoreo >= 51) && ($mayoreo <= 100)){
+                $menudeo = $mayoreo + 10;
+            }elseif(($mayoreo >= 101) && ($mayoreo <= 500)){
+                $menudeo = $mayoreo + 20;
+            }elseif(($mayoreo >= 501) && ($mayoreo <= 1000)){
+                $menudeo = $mayoreo + 50;
+            }elseif($mayoreo >= 1001){
+                $menudeo =  $mayoreo + 100; 
+            }
+            if($costo <= $aaa){
+                if($aaa <= $centro){
+                    if($centro <= $especial){
+                        if($especial <= $caja){
+                            if($caja <= $docena){
+                                if($docena <= $mayoreo){
+                                    $sql = "SELECT * FROM F_ART WHERE CODART = ?";
+                                    $exec = $this->con->prepare($sql);
+                                    $exec -> execute([$price["MODELO"]]);
+                                    $price=$exec->fetchall(\PDO::FETCH_ASSOC);
+                                    if($price){
+                                        foreach($price as $pri){
+                                            $upd7 = "UPDATE F_LTA SET PRELTA = $aaa WHERE ARTLTA = ? AND TARLTA = 7 ";
+                                            $exec = $this->con->prepare($upd7);
+                                            $exec -> execute([$pri["CODART"]]);
+                                            $upd6 = "UPDATE F_LTA SET PRELTA = $centro WHERE ARTLTA = ? AND TARLTA = 6 ";
+                                            $exec = $this->con->prepare($upd6);
+                                            $exec -> execute([$pri["CODART"]]);
+                                            $upd5 = "UPDATE F_LTA SET PRELTA = $especial WHERE ARTLTA = ? AND TARLTA = 5 ";
+                                            $exec = $this->con->prepare($upd5);
+                                            $exec -> execute([$pri["CODART"]]);
+                                            $upd4 = "UPDATE F_LTA SET PRELTA = $caja WHERE ARTLTA = ? AND TARLTA = 4 ";
+                                            $exec = $this->con->prepare($upd4);
+                                            $exec -> execute([$pri["CODART"]]);
+                                            $upd3 = "UPDATE F_LTA SET PRELTA = $docena WHERE ARTLTA = ? AND TARLTA = 3 ";
+                                            $exec = $this->con->prepare($upd3);
+                                            $exec -> execute([$pri["CODART"]]);
+                                            $upd2 = "UPDATE F_LTA SET PRELTA = $mayoreo WHERE ARTLTA = ? AND TARLTA = 2 ";
+                                            $exec = $this->con->prepare($upd2);
+                                            $exec -> execute([$pri["CODART"]]);
+                                            $upd1 = "UPDATE F_LTA SET PRELTA = $menudeo WHERE ARTLTA = ? AND TARLTA = 1 ";
+                                            $exec = $this->con->prepare($upd1);
+                                            $exec -> execute([$pri["CODART"]]);
+                                            $arti = "UPDATE F_ART SET PCOART = $costo, FUMART = "."'".$date_format."'"." WHERE CODART = ? ";
+                                            $exec = $this->con->prepare($arti);
+                                            $exec -> execute([$pri["CODART"]]);
+                                        }                                       
+                                        $goals[]= "producto $modelo actualizado ";
+                                        }else{$fail[]="No se encuentra el modelo $modelo";} 
+                                }else{$fail[]="$modelo precio DOCENA mas alto que MAYOREO ";}
+                            }else{$fail[]="$modelo precio CAJA mas alto que DOCENA ";}
+                        }else{$fail[]="$modelo precio ESPECIAL mas alto que CAJA ";}
+                    }else{$fail[]="$modelo precio CENTRO mas alto que ESPECIAL ";}
+                }else{$fail[]="$modelo precio AAA mas alto que CENTRO ";}             
+            }else{$fail[]="$modelo precio COSTO mas alto que AAA";}
         }
+        return response()->json([
+            "actualizados"=>$goals,
+            "revisar"=>$fail
+        ]);        
 
-        
     }
 }
