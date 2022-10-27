@@ -709,7 +709,7 @@ class ProductController extends Controller{
 
         foreach($prices as $price){
             $modelo = $price["MODELO"];
-            $costo = round($price["COSTO "],2);
+            $costo = round($price["COSTO"],2);
             $aaa = round($price["AAA"],2);
             $centro = round($price["CENTRO"],0);
             $especial = round($price["ESPECIAL"],0);
