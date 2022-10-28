@@ -55,6 +55,7 @@ $router->group(['prefix' => 'product'], function () use ($router){
     $router->post('/insertpub','ProductController@insertpub');
     $router->post('/insertpricespub','ProductController@insertpricespub');
     $router->get('/pricesart','ProductController@pricesart');
+    $router->get('/fam','ProductController@familiarizacion');
 });
 
 $router->group(['prefix' => 'client'], function () use ($router){
@@ -115,4 +116,12 @@ $router->group(['prefix' => 'accounting'], function () use ($router){
 $router->group(['prefix' => 'origin'], function () use ($router){
     $router->post('/changeCodes', 'OriginController@changeCodes');
     $router->post('/deleteCodes', 'OriginController@deleteCodes');
+});
+
+$router->group(['prefix' => 'Received'], function () use ($router){
+    $router->post('/c', 'ReceivedController@required');
+});
+
+$router->group(['prefix' => 'Required'], function () use ($router){
+    $router->post('/c', 'RequiredController@received');
 });
