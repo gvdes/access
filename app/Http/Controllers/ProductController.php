@@ -445,6 +445,7 @@ class ProductController extends Controller{
 
             
         foreach($articulos as $art){
+            $codigo = trim($art["CODIGO"]);
             $deslarga = trim($art["DESCRIPCION"]);
             $desgen = trim(substr($art["DESCRIPCION"],0,50));
             $deset = trim(substr($art["DESCRIPCION"],0,30));
@@ -462,7 +463,7 @@ class ProductController extends Controller{
             $cp3art = trim($art["UNIDA MED COMPRA"]);
 
             $articulo  = [              
-                    $art["CODIGO"],
+                    $codigo,
                     $barcode,
                     $famart,
                     $desgen,
@@ -492,14 +493,14 @@ class ProductController extends Controller{
 
             $articul = "SELECT CODART, EANART, CCOART FROM F_ART WHERE CODART = ? ";
             $exec = $this->con->prepare($articul);
-            $exec -> execute([$art["CODIGO"]]);
+            $exec -> execute([$codigo]);
             $arti=$exec->fetchall(\PDO::FETCH_ASSOC);
             if($arti){
                 foreach($arti as $arc){//actualizar en factusol
                     $update = "UPDATE F_ART SET FAMART = "."'".$famart."'"." , CP1ART = "."'".$cat."'"."  , FUMART = "."'".$date_format."'".", EANART = $barcode, PCOART = $cost, UPPART = $PXC , EQUART = $PXC, REFART = "."'".$refart."'"."  , CP3ART = "."'".$cp3art."'"."  WHERE CODART = ? "; 
                     $exec = $this->con->prepare($update);
-                    $exec -> execute([$arc["CODART"]]);
-                    $goals["ACTUALIZADOS"][]="Se actualizo el modelo  ".$arc["CODART"]." con codigo de barras ".$arc["EANART"];}
+                    $exec -> execute([$codigo]);
+                    $goals["ACTUALIZADOS"][]="Se actualizo el modelo  ".$codigo." con codigo de barras ".$arc["EANART"];}
             }else{
                 $corto = "SELECT CODART, EANART, CCOART FROM F_ART WHERE CCOART = ? ";
                 $exec = $this->con->prepare($corto);
