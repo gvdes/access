@@ -119,9 +119,9 @@ $router->group(['prefix' => 'origin'], function () use ($router){
 });
 
 $router->group(['prefix' => 'Received'], function () use ($router){
-    $router->post('/c', 'ReceivedController@required');
+    $router->post('/Received', 'ReceivedController@required');
 });
 
 $router->group(['prefix' => 'Required'], function () use ($router){
-    $router->post('/c', 'RequiredController@received');
+    $router->post('/Required', 'RequiredController@received');
 });

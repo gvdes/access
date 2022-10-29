@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 
 class RequiredController extends Controller
 {
@@ -21,13 +23,15 @@ class RequiredController extends Controller
         try{
             $id = $request->id;//se recibe por metodo post el id de la requisicion
             $date = date("Y/m/d H:i");//se gerera la fecha de el dia de hoy con  formato de fecha y hora
-            $date_format = date("d/m/Y");//se formatea la fecha de el dia con el formato solo de fecha
+            $date_format = Carbon::now()->format('d/m/Y');//se obtiene el dia que ocurre
+
+            // $date_format = date("d/m/Y");//se formatea la fecha de el dia con el formato solo de fecha
             $hour = "01/01/1900 ".explode(" ", $date)[1];//se formatea la fecha de el dia de hoy poniendo solo la hora en la que se genera
             $status = DB::table('requisition')->where('id',$id)->value('_status');
             $id = DB::table('requisition')->where('id',$id)->value('id');
             if($id){//SE VALIDA QUE LA REQUISICION EXISTA
                 if($status == 9){//SE VALIDA QUE LA REQUISICION ESTE EN ESTATUS 6 POR ENVIAR
-                    $count =DB::table('product_required')->where('_requisition',$id)->wherenotnull('toReceived')->count('_product');
+                    $count =DB::table('product_required')->where('_requisition',$id)->wherenotnull('toReceived')->where('toReceived','>',0)->count('_product');
                     if($count > 0){//SE VALIDA QUE LA REQUISICION CONTENGA AL MENOS 1 ARTICULO CONTADO
                         $requisitions = DB::table('requisition AS R')->where('R.id', $id)->first();//se realiza el query para pasar los datos de la requisicion con la condicion de el id recibido
                         $not = $requisitions->notes;//se obtiene las notas de la requisision
@@ -98,7 +102,10 @@ class RequiredController extends Controller
                         $response = curl_exec($curl);//respuesta
                         $err = curl_error($curl);         //errror
                         curl_close($curl);//se cierra curl
-                        return response()->json([$folio]);//se retorna el folio de la factura
+                        return response()->json([                            
+                        "folio"=>$folio,
+                        "art_contados"=>$count,
+                        "can_contada"=>$sum],201);//se retorna el folio de la factura
             
                     }else{return response("NO SE PUEDE PROCESAR YA QUE NO HAY ARTICULOS VALIDADOS",400);}
                 }else{return response("NO SE CREA LA FACTURA LA REQUISICION AUN NO ES VALIDADA",400);}
@@ -112,6 +119,7 @@ class RequiredController extends Controller
             ->leftjoin('prices_product AS PP','PP._product','=','P.id')
             ->where('PR._requisition',$id)
             ->wherenotnull('PR.toReceived')
+            ->where('PR.toReceived','>',0)
             ->select('P.code AS codigo','P.description AS descripcion','PR.toReceived AS cantidad','PP.AAA AS precio' ,'P.cost as costo','PR._supply_by AS medida','PR.ipack AS PXC')
             ->get();
 

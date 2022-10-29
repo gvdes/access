@@ -6,6 +6,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 
 class ReceivedController extends Controller
 {
@@ -21,15 +23,16 @@ class ReceivedController extends Controller
 
     public function required(Request $request){ //metodo para crear la salida a la sucursal
         try{
-            $id = $request->id;//se recibe por metodo post el id de la requisicion
+            $id = $request->id;//se recibe por metodo post el id de la requisicion           
             $date = date("Y/m/d H:i");//se gerera la fecha de el dia de hoy con  formato de fecha y hora
-            $date_format = date("d/m/Y");//se formatea la fecha de el dia con el formato solo de fecha
+            $date_format = Carbon::now()->format('d/m/Y');
+            // $date_format = date("d/m/Y");//se formatea la fecha de el dia con el formato solo de fecha
             $hour = "01/01/1900 ".explode(" ", $date)[1];//se formatea la fecha de el dia de hoy poniendo solo la hora en la que se genera
             $status = DB::table('requisition')->where('id',$id)->value('_status');//se obtiene el status de el la requisicion
             $id = DB::table('requisition')->where('id',$id)->value('id');//se verifica que exista
             if($id){//SE VALIDA QUE LA REQUISICION EXISTA
                 if($status == 5){//SE VALIDA QUE LA REQUISICION ESTE EN ESTATUS 5 validando
-                    $count =DB::table('product_required')->where('_requisition',$id)->wherenotnull('toDelivered')->count('_product');//se cuentan cuantos articulos se validaron
+                    $count =DB::table('product_required')->where('_requisition',$id)->wherenotnull('toDelivered')->where('toDelivered','>',0)->count('_product');//se cuentan cuantos articulos se validaron
                     $sumcase = DB::table('product_required AS PR')->select(DB::raw('SUM(CASE WHEN PR._supply_by = 1 THEN PR.toDelivered  WHEN PR._supply_by = 2  THEN PR.toDelivered * 12  WHEN PR._supply_by = 3  THEN PR.toDelivered * PR.ipack   WHEN PR._supply_by = 4    THEN (PR.toDelivered * (PR.ipack / 2))  ELSE 0  END) AS CASESUM'))->where('PR._requisition', $id)->first(); //se cuenta cuantas piezas se validaron
                      $sum = $sumcase->CASESUM;
                     if($count > 0){//SE VALIDA QUE LA REQUISICION CONTENGA AL MENOS 1 ARTICULO CONTADO
@@ -111,8 +114,10 @@ class ReceivedController extends Controller
                         $err = curl_error($curl);         
                         curl_close($curl);
             
-                        return response()->json($folio);//se retorna el folio de la factura
-                       
+                        return response()->json([
+                            "folio"=>$folio,
+                            "art_contados"=>$count,
+                            "can_contada"=>$sum],201);//se retorna el folio de la factura
                     }else{return response("NO SE PUEDE PROCESAR YA QUE NO HAY ARTICULOS VALIDADOS",400);}
                 }else{return response("NO SE CREA LA FACTURA LA REQUISICION AUN NO ES VALIDADA",400);}
             }else{return response("EL CODIGO DE REQUISICION NO EXITE",404);}
@@ -125,6 +130,7 @@ class ReceivedController extends Controller
             ->leftjoin('prices_product AS PP','PP._product','=','P.id')
             ->where('PR._requisition',$id)
             ->wherenotnull('PR.toDelivered')
+            ->where('PR.toDelivered','>',0)
             ->select('P.code AS codigo','P.description AS descripcion','PR.toDelivered AS cantidad','PP.AAA AS precio' ,'P.cost as costo','PR._supply_by AS medida','PR.ipack AS PXC')
             ->get();
 
