@@ -19,7 +19,7 @@ class RequiredController extends Controller
       }else{ die("$access no es un origen de datos valido."); }
     } 
 
-    public function received(Request $request){ //metodo para crear la salida a la sucursal
+    public function invoice_received(Request $request){ //metodo para crear la salida a la sucursal
         try{
             $id = $request->id;//se recibe por metodo post el id de la requisicion
             $date = date("Y/m/d H:i");//se gerera la fecha de el dia de hoy con  formato de fecha y hora
