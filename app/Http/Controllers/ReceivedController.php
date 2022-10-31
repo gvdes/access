@@ -107,7 +107,7 @@ class ReceivedController extends Controller
                           CURLOPT_SSL_VERIFYPEER => 0,
                           CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
                           CURLOPT_CUSTOMREQUEST => "POST",
-                          CURLOPT_POSTFIELDS => "token=6r5vqntlz18k61iu&to=+525573461022&body=el pedido numero P-$id ya esta validado con $count  Modelos y $sum piezas.  El numero de salida es $folio proximo a llegar&priority=1&referenceId=",//se redacta el mensaje que se va a enviar con los modelos y las piezas y el numero de salida
+                          CURLOPT_POSTFIELDS => "token=6r5vqntlz18k61iu&to=+52$tel&body=el pedido numero P-$id ya esta validado con $count  Modelos y $sum piezas.  El numero de salida es $folio proximo a llegar&priority=1&referenceId=",//se redacta el mensaje que se va a enviar con los modelos y las piezas y el numero de salida
                           CURLOPT_HTTPHEADER => array(
                             "content-type: application/x-www-form-urlencoded"),));
                         $response = curl_exec($curl);
@@ -136,9 +136,12 @@ class ReceivedController extends Controller
 
         $pos= 1;//inicio contador de posision
         $ttotal=0;//inicio contador de total
+       
         foreach($product_require as $pro){//inicio de cliclo para obtener productos
             $precio = $pro->precio;//se optiene el precio de cada producto  
-            if($pro->medida == 1){$canti = $pro->cantidad ;}elseif($pro->medida == 2){$canti = $pro->cantidad * 12; }elseif($pro->medida == 3){$canti = $pro->cantidad * $pro->PXC ;}elseif($pro->medida == 4){$canti = ($pro->cantidad * ($pro->PXC / 2)) ;}//se valida la unidad de medida de el surtio
+            $bull = null;
+            if($pro->medida == 1){$canti = $pro->cantidad ;}elseif($pro->medida == 2){$canti = $pro->cantidad * 12; }elseif($pro->medida == 3){$canti = $pro->cantidad * $pro->PXC ; $bull = $pro->cantidad; }elseif($pro->medida == 4){$canti = ($pro->cantidad * ($pro->PXC / 2)) ;}//se valida la unidad de medida de el surtio
+            // $bul = $bull > 0 ? $bull : null;
             $total = $precio * $canti ;//se obtiene el total de la linea
             $ttotal = $ttotal + $total ;//se obtiene el total de la requisision
             $values = [//se genera el arreglo para la insercion a factusol
@@ -150,9 +153,10 @@ class ReceivedController extends Controller
                 $canti,//cantidad contada
                 $pro->precio,//precio de el articulo
                 $total,//total de la linea
-                $pro->costo//costo actual de el articulo
+                $pro->costo,//costo actual de el articulo
+                $bull//cajas ponidas
             ];
-            $insert = "INSERT INTO F_LFA (TIPLFA,CODLFA,POSLFA,ARTLFA,DESLFA,CANLFA,PRELFA,TOTLFA,COSLFA) VALUES (?,?,?,?,?,?,?,?,?)";//query para insertar las lineas de la factura creada en factusol
+            $insert = "INSERT INTO F_LFA (TIPLFA,CODLFA,POSLFA,ARTLFA,DESLFA,CANLFA,PRELFA,TOTLFA,COSLFA,BULLFA) VALUES (?,?,?,?,?,?,?,?,?,?)";//query para insertar las lineas de la factura creada en factusol
             $exec = $this->conn->prepare($insert);
             $exec -> execute($values);//envia el arreglo
 
