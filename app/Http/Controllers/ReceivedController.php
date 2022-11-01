@@ -31,7 +31,7 @@ class ReceivedController extends Controller
             $status = DB::table('requisition')->where('id',$id)->value('_status');//se obtiene el status de el la requisicion
             $id = DB::table('requisition')->where('id',$id)->value('id');//se verifica que exista
             if($id){//SE VALIDA QUE LA REQUISICION EXISTA
-                if($status == 5){//SE VALIDA QUE LA REQUISICION ESTE EN ESTATUS 5 validando
+                if($status == 6){//SE VALIDA QUE LA REQUISICION ESTE EN ESTATUS 5 validando
                     $count =DB::table('product_required')->where('_requisition',$id)->wherenotnull('checkout')->where('checkout','>',0)->count('_product');//se cuentan cuantos articulos se validaron
                     $sumcase = DB::table('product_required AS PR')->select(DB::raw('SUM(CASE WHEN PR._supply_by = 1 THEN PR.checkout  WHEN PR._supply_by = 2  THEN PR.checkout * 12  WHEN PR._supply_by = 3  THEN PR.checkout * PR.ipack   WHEN PR._supply_by = 4    THEN (PR.checkout * (PR.ipack / 2))  ELSE 0  END) AS CASESUM'))->where('PR._requisition', $id)->first(); //se cuenta cuantas piezas se validaron
                      $sum = $sumcase->CASESUM;
