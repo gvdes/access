@@ -76,8 +76,8 @@ class RequiredController extends Controller
                         DB::table('requisition')->where('id',$id)->update(['invoice_received'=>$folio]);//se actualiza la columna invoice con el numero de la factura
                         $sumcase = DB::table('product_required AS PR')->select(DB::raw('SUM(CASE WHEN PR._supply_by = 1 THEN PR.toReceived  WHEN PR._supply_by = 2  THEN PR.toReceived * 12  WHEN PR._supply_by = 3  THEN PR.toReceived * PR.ipack   WHEN PR._supply_by = 4    THEN (PR.toReceived * (PR.ipack / 2))  ELSE 0  END) AS CASESUM'))->where('PR._requisition', $id)->first(); //se cuenta cuantas piezas se validaron
                         $sum = $sumcase->CASESUM;
-                        $countde =DB::table('product_required')->where('_requisition',$id)->wherenotnull('toDelivered')->count('_product');//suma de conteo de productos enviadas
-                        $sumcasede = DB::table('product_required AS PR')->select(DB::raw('SUM(CASE WHEN PR._supply_by = 1 THEN PR.toDelivered  WHEN PR._supply_by = 2  THEN PR.toDelivered * 12  WHEN PR._supply_by = 3  THEN PR.toDelivered * PR.ipack   WHEN PR._supply_by = 4    THEN (PR.toDelivered * (PR.ipack / 2))  ELSE 0  END) AS CASESUM'))->where('PR._requisition', $id)->first(); //se cuenta cuantas piezas se validaron
+                        $countde =DB::table('product_required')->where('_requisition',$id)->wherenotnull('checkout')->count('_product');//suma de conteo de productos enviadas
+                        $sumcasede = DB::table('product_required AS PR')->select(DB::raw('SUM(CASE WHEN PR._supply_by = 1 THEN PR.checkout  WHEN PR._supply_by = 2  THEN PR.checkout * 12  WHEN PR._supply_by = 3  THEN PR.checkout * PR.ipack   WHEN PR._supply_by = 4    THEN (PR.checkout * (PR.ipack / 2))  ELSE 0  END) AS CASESUM'))->where('PR._requisition', $id)->first(); //se cuenta cuantas piezas se validaron
                         $sumde = $sumcasede->CASESUM;
                         $difmod =  $count - $countde;//diferencia de conteos
                         $difcan = $sum - $sumde;//diferencias en cantidad
