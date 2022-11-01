@@ -24,7 +24,6 @@ class RequiredController extends Controller
             $id = $request->id;//se recibe por metodo post el id de la requisicion
             $date = date("Y/m/d H:i");//se gerera la fecha de el dia de hoy con  formato de fecha y hora
             $date_format = Carbon::now()->format('d/m/Y');//se obtiene el dia que ocurre
-
             // $date_format = date("d/m/Y");//se formatea la fecha de el dia con el formato solo de fecha
             $hour = "01/01/1900 ".explode(" ", $date)[1];//se formatea la fecha de el dia de hoy poniendo solo la hora en la que se genera
             $status = DB::table('requisition')->where('id',$id)->value('_status');

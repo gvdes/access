@@ -107,7 +107,7 @@ class ReceivedController extends Controller
                           CURLOPT_SSL_VERIFYPEER => 0,
                           CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
                           CURLOPT_CUSTOMREQUEST => "POST",
-                          CURLOPT_POSTFIELDS => "token=6r5vqntlz18k61iu&to=+52$tel&body=el pedido numero P-$id ya esta validado con $count  Modelos y $sum piezas.  El numero de salida es $folio proximo a llegar&priority=1&referenceId=",//se redacta el mensaje que se va a enviar con los modelos y las piezas y el numero de salida
+                          CURLOPT_POSTFIELDS => "token=6r5vqntlz18k61iu&to=+52$tel&body=el pedido numero P-$id ya esta validado con $count  Modelos y $sum piezas.  El numero de salida es $folio proximo a llegar🤙🛺🚛&priority=1&referenceId=",//se redacta el mensaje que se va a enviar con los modelos y las piezas y el numero de salida
                           CURLOPT_HTTPHEADER => array(
                             "content-type: application/x-www-form-urlencoded"),));
                         $response = curl_exec($curl);
