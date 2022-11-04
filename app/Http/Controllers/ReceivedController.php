@@ -32,8 +32,8 @@ class ReceivedController extends Controller
             $id = DB::table('requisition')->where('id',$id)->value('id');//se verifica que exista
             if($id){//SE VALIDA QUE LA REQUISICION EXISTA
                 if($status == 6){//SE VALIDA QUE LA REQUISICION ESTE EN ESTATUS 5 validando
-                    $count =DB::table('product_required')->where('_requisition',$id)->wherenotnull('checkout')->where('checkout','>',0)->count('_product');//se cuentan cuantos articulos se validaron
-                    $sumcase = DB::table('product_required AS PR')->select(DB::raw('SUM(CASE WHEN PR._supply_by = 1 THEN PR.checkout  WHEN PR._supply_by = 2  THEN PR.checkout * 12  WHEN PR._supply_by = 3  THEN PR.checkout * PR.ipack   WHEN PR._supply_by = 4    THEN (PR.checkout * (PR.ipack / 2))  ELSE 0  END) AS CASESUM'))->where('PR._requisition', $id)->first(); //se cuenta cuantas piezas se validaron
+                    $count =DB::table('product_required')->where('_requisition',$id)->wherenotnull('toDelivered')->where('toDelivered','>',0)->count('_product');//se cuentan cuantos articulos se validaron
+                    $sumcase = DB::table('product_required AS PR')->select(DB::raw('SUM(CASE WHEN PR._supply_by = 1 THEN PR.toDelivered  WHEN PR._supply_by = 2  THEN PR.toDelivered * 12  WHEN PR._supply_by = 3  THEN PR.toDelivered * PR.ipack   WHEN PR._supply_by = 4    THEN (PR.toDelivered * (PR.ipack / 2))  ELSE 0  END) AS CASESUM'))->where('PR._requisition', $id)->first(); //se cuenta cuantas piezas se validaron
                      $sum = $sumcase->CASESUM;
                     if($count > 0){//SE VALIDA QUE LA REQUISICION CONTENGA AL MENOS 1 ARTICULO CONTADO
                         $requisitions = DB::table('requisition AS R')->join('workpoints AS W','W.id','=','R._workpoint_from')->where('R.id', $id)->select('R.*','W._client AS cliente')->first();//se realiza el query para pasar los datos de la requisicion con la condicion de el id recibido
@@ -128,9 +128,9 @@ class ReceivedController extends Controller
             ->join('products AS P','P.id','=','PR._product')
             ->leftjoin('prices_product AS PP','PP._product','=','P.id')
             ->where('PR._requisition',$id)
-            ->wherenotnull('PR.checkout')
-            ->where('PR.checkout','>',0)
-            ->select('P.code AS codigo','P.description AS descripcion','PR.checkout AS cantidad','PP.AAA AS precio' ,'P.cost as costo','PR._supply_by AS medida','PR.ipack AS PXC')
+            ->wherenotnull('PR.toDelivered')
+            ->where('PR.toDelivered','>',0)
+            ->select('P.code AS codigo','P.description AS descripcion','PR.toDelivered AS cantidad','PP.AAA AS precio' ,'P.cost as costo','PR._supply_by AS medida','PR.ipack AS PXC')
             ->get();
 
         $pos= 1;//inicio contador de posision
