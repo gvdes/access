@@ -1,5 +1,6 @@
 <?php
 
+
 /** @var \Laravel\Lumen\Routing\Router $router */
 
 /*
@@ -124,4 +125,8 @@ $router->group(['prefix' => 'Received'], function () use ($router){
 
 $router->group(['prefix' => 'Required'], function () use ($router){
     $router->post('/Required', 'RequiredController@invoice_received');
+});
+
+$router->group(['prefix' => 'Facturas'], function () use ($router){
+    $router->post('/Facturas', 'ClientOrderController@InvoiceRequired');
 });

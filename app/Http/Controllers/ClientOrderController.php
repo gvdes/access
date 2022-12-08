@@ -188,5 +188,65 @@ class ClientOrderController extends Controller{
         }else{
             return 1;
         }
+    } 
+
+    public function InvoiceRequired(Request $request){
+        $required = $request->folio;
+        $quitado = explode("-",$required);
+        $tipo = $quitado[0];
+        $folio = intval($quitado[1]);
+        $sql = "SELECT CNOFAC, TOTFAC, FECFAC, HORFAC FROM F_FAC WHERE TIPFAC = ? AND CODFAC = ?";
+        $exec = $this->con->prepare($sql);
+        $exec->execute([$tipo,$folio]);
+        $row = $exec->fetch(\PDO::FETCH_ASSOC);
+        if($row){
+            $fpa =  $this->FpaInvoice($tipo,$folio);
+            $body = $this->bodyInvoice($tipo,$folio);
+            $header = [
+                "FECFAC"=>$row['FECFAC'],
+                "HORFAC"=>$row['HORFAC'],
+                "TIPFAC_DOCFAC"=>$required,
+                "CNOFAC"=>$row['CNOFAC'],
+                "TOTFAC"=>$row["TOTFAC"]
+            ];
+            return response()->json([  "header"=>$header,
+                                        "body"=>$body,
+                                        "payments"=>$fpa],200);
+        }else{return response()->json("No existe ninguna factura",404);}
+    }
+
+    public function FpaInvoice($tipo,$folio){
+        $sql = "SELECT LINLCO, FPALCO, CPTLCO,IMPLCO FROM F_LCO WHERE TFALCO = ? AND CFALCO = ?";
+        $exec = $this->con->prepare($sql);
+        $exec->execute([$tipo,$folio]);
+        $row = $exec->fetchall(\PDO::FETCH_ASSOC);
+        $colsTabProds = array_keys($row[0]);
+        foreach($row as $rows){{foreach($colsTabProds as $col){ $rows[$col] = utf8_encode($rows[$col]);}}
+            $fpa [] = [
+                "LINLCO" =>$rows['LINLCO'],
+                "FPALCO"=>$rows['FPALCO'],
+                "CPTLCO"=>$rows['CPTLCO'],
+                "IMPLCO"=>$rows['IMPLCO']
+            ];
+        }
+        return $fpa;
+    }
+
+    public function BodyInvoice($tipo,$folio){
+        $sql = "SELECT ARTLFA, DESLFA,CANLFA, PRELFA, TOTLFA FROM F_LFA WHERE TIPLFA = ? AND CODLFA = ?";
+        $exec = $this->con->prepare($sql);
+        $exec->execute([$tipo,$folio]);
+        $row = $exec->fetchall(\PDO::FETCH_ASSOC);
+        $colsTabProds = array_keys($row[0]);
+        foreach($row as $rows){{foreach($colsTabProds as $col){ $rows[$col] = utf8_encode($rows[$col]);}}
+            $body [] = [
+                "ARTLFA"=>$rows['ARTLFA'],
+                "DESLFA"=>$rows['DESLFA'],
+                "CANLFA"=>$rows['CANLFA'],
+                "PRELFA"=>$rows['PRELFA'],
+                "TOTLFA"=>$rows['TOTLFA'],
+            ];
+        }
+        return $body;
     }
 }
