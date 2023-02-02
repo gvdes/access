@@ -574,13 +574,14 @@ class ProductController extends Controller{
             curl_close($ch);
 
         
-    }
-        return response()->json(["products" => $ex,
-                                 "prices" => $dat
-    ]);
-    }
+        }
+            return response()->json(["products" => $ex,
+                                    "prices" => $dat
+        ]);
+        }
         else{return response()->json("no hay articulos que exportar");}
     }
+    
     public function replyprices($date){
         $prices = "SELECT F_LTA.* FROM ((F_LTA  INNER JOIN F_LFA ON F_LFA.ARTLFA = F_LTA.ARTLTA) INNER JOIN F_FAC ON F_FAC.TIPFAC = F_LFA.TIPLFA AND F_FAC.CODFAC = F_LFA.CODLFA) WHERE F_FAC.CLIFAC = 20 AND F_LTA.TARLTA NOT IN (7) AND  F_FAC.FECFAC >= #".$date."#";
         $exec = $this->con->prepare($prices);
@@ -634,7 +635,7 @@ class ProductController extends Controller{
                 $request->products["PHAART"],
                 $request->products["REFART"],
                 $request->products["FTEART"],
-                ($request->products["PCOART"]*1.05),
+                $request->products["PCOART"],
                 $request->products["UPPART"],
                 $request->products["CANART"],
                 $request->products["CAEART"],
@@ -669,17 +670,17 @@ class ProductController extends Controller{
         
 
         if($request->prices["TARLTA"] > 1){
-            $updprices =   round($request->prices["PRELTA"]*1.05);
+            $updprices =   round($request->prices["PRELTA"]);
             $upd = "UPDATE F_LTA SET PRELTA = $updprices WHERE ARTLTA = ? AND TARLTA = ?";
             $exec = $this->con->prepare($upd);
             $exec -> execute([$request->prices["ARTLTA"], $request->prices["TARLTA"]]);
 
         $insert = "INSERT INTO  F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
         $exec = $this->con->prepare($insert);
-        $exec -> execute([$request->prices["TARLTA"],$request->prices["ARTLTA"],0,round($request->prices["PRELTA"] * 1.05)]);}
+        $exec -> execute([$request->prices["TARLTA"],$request->prices["ARTLTA"],0,round($request->prices["PRELTA"])]);}
         
         if($request->prices["TARLTA"] == 2){
-            $pricesnew =   round($request->prices["PRELTA"]*1.05);
+            $pricesnew =   round($request->prices["PRELTA"]);
         
             if(($pricesnew >= 0) && ($pricesnew <= 50)){
                 $prai = $pricesnew + 5;
