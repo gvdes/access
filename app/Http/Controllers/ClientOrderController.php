@@ -611,8 +611,10 @@ class ClientOrderController extends Controller{
 
             try {
                 try{
+                    if(file_exists($imagen)){
                     $logo = EscposImage::load($imagen, false);
                     $printer->bitImage($logo);
+                    }
                     $printer->text(" \n");
                     $printer->text(" \n");
                     $printer->text("------------------------------------\n");
