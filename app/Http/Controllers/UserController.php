@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller{
     /**
@@ -104,5 +105,61 @@ class UserController extends Controller{
         }else{
             return response()->json(["msg" => "Sin agentes por actualizar"]);
         }
+    }
+
+    public function permission(Request $request){
+        $failstores = [];
+        $stor = [];
+        $idpermission = $request->id;
+        $select = "SELECT CODPER, DESPER, CADPER FROM T_PER WHERE CODPER = $idpermission";
+        $exec = $this->con->prepare($select);
+        $exec->execute();
+        $fil = $exec->fetch(\PDO::FETCH_ASSOC);
+
+        $stores = DB::table('workpoints')->where('_type',2)->where('active',1)->get();
+        foreach($stores as $store){
+          $url = $store->dominio."/access/public/user/replypermission";//se optiene el inicio del dominio de la sucursal
+          $ch = curl_init($url);//inicio de curl
+          $data = json_encode(["permisos" => $fil]);//se codifica el arreglo de los proveedores
+          //inicio de opciones de curl
+          curl_setopt($ch, CURLOPT_POSTFIELDS,$data);//se envia por metodo post
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+          curl_setopt($ch, CURLOPT_HEADER, 0);
+          curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+          curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+          //fin de opciones e curl
+          $exec = curl_exec($ch);//se executa el curl
+          $exc = json_decode($exec);//se decodifican los datos decodificados
+          if(is_null($exc)){//si me regresa un null
+              $failstores[] =$store->alias." sin conexion";//la sucursal se almacena en sucursales fallidas
+            //   $failstores[] =["sucursal"=>$store->alias, "mssg"=>$exec];//la sucursal se almacena en sucursales fallidas
+  
+          }else{
+              $stor[] =["sucursal"=>$store->alias, "mssg"=>$exc];
+          }
+          curl_close($ch);//cirre de curl
+        }
+        $res = [
+            "store"=>$stor,
+            "fail"=>$failstores,
+            "replicados"=>$fil,
+          ];
+    
+    
+          return response()->json($res);
+    }
+
+    public function replypermission(Request $request){
+        $updat = $request->permisos;
+
+        $updated = "UPDATE T_PER SET DESPER = "."'".$updat['DESPER']."'"." , CADPER = "."'".$updat['CADPER']."'"." WHERE CODPER = ".$updat['CODPER'];
+        $exec = $this->con->prepare($updated);
+        $exec->execute();
+        $res = [
+            "msg"=>"LISTO BROU"
+        ];
+        return $res;
+
     }
 }

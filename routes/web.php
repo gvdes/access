@@ -63,6 +63,8 @@ $router->group(['prefix' => 'client'], function () use ($router){
     $router->post('/all', 'ClientController@getClients');
     $router->post('/raw', 'ClientController@getRawClients');
     $router->post('/sync', 'ClientController@syncClients');
+    $router->get('/replyespecial', 'ClientController@replyespecial');
+    $router->post('/repes', 'ClientController@repes');
 });
 
 $router->group(['prefix' => 'provider'], function () use ($router){
@@ -75,6 +77,8 @@ $router->group(['prefix' => 'user'], function () use ($router){
     $router->post('/', 'UserController@getUsers');
     $router->post('/raw', 'UserController@getRawUsers');
     $router->post('/sync', 'UserController@syncUsers');
+    $router->get('/permission', 'UserController@permission');
+    $router->post('/replypermission', 'UserController@replypermission');
 });
 
 $router->group(['prefix' => 'compras'], function () use ($router){
@@ -129,4 +133,10 @@ $router->group(['prefix' => 'Required'], function () use ($router){
 
 $router->group(['prefix' => 'Facturas'], function () use ($router){
     $router->post('/Facturas', 'ClientOrderController@InvoiceRequired');
+});
+
+$router->group(['prefix' => 'iva'], function () use ($router){
+    $router->get('/ticket', 'ClientOrderController@ticket');
+    $router->post('/create', 'ClientOrderController@iva');
+    $router->get('/prueba', 'ClientOrderController@index');
 });

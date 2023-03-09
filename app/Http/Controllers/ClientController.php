@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ClientController extends Controller{
   /**
@@ -152,4 +153,82 @@ class ClientController extends Controller{
       return response()->json(["msg" => "Sin clientes por actualizar"]);
     }
   }
+
+  public function replyespecial(Request $request){
+    $failstores = [];
+    $stor = [];
+    $idclient = $request->id;
+    $select = "SELECT * FROM F_PRC WHERE CLIPRC = $idclient";
+    $exec = $this->con->prepare($select);
+    $exec->execute();
+    $fil = $exec->fetchall(\PDO::FETCH_ASSOC);
+    if($fil){
+      foreach($fil as $row){
+        $sel[] = $row;
+      }
+
+      $stores = DB::table('workpoints')->where('_type',2)->where('active',1)->get();
+      foreach($stores as $store){
+        $url = $store->dominio."/access/public/client/repes";//se optiene el inicio del dominio de la sucursal
+        $ch = curl_init($url);//inicio de curl
+        $data = json_encode(["precios" => $sel,"client"=>$idclient]);//se codifica el arreglo de los proveedores
+        //inicio de opciones de curl
+        curl_setopt($ch, CURLOPT_POSTFIELDS,$data);//se envia por metodo post
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+        //fin de opciones e curl
+        $exec = curl_exec($ch);//se executa el curl
+        $exc = json_decode($exec);//se decodifican los datos decodificados
+        if(is_null($exc)){//si me regresa un null
+            $failstores[] =$store->alias." sin conexion";//la sucursal se almacena en sucursales fallidas
+            // $failstores[] =["sucursal"=>$store->alias, "mssg"=>$exec];//la sucursal se almacena en sucursales fallidas
+
+        }else{
+            $stor[] =["sucursal"=>$store->alias, "mssg"=>$exc];
+        }
+        curl_close($ch);//cirre de curl
+      }
+
+      $res = [
+        "store"=>$stor,
+        "fail"=>$failstores,
+        "idcliente"=>$idclient,
+        "preciosespeciales"=>$sel
+      ];
+
+
+      return response()->json($res);
+    }else{return response()->json("No se encuentra el cliente con precios especiales",404);}
+  }
+
+  public function repes(Request $request){
+    $idclient = $request->client;
+
+    $delete = "DELETE FROM F_PRC WHERE CLIPRC = $idclient";
+    $exec = $this->con->prepare($delete);
+    $exec->execute();
+
+    $especial = $request->precios;
+
+    foreach($especial as $row){
+      $date [] = $row;
+      $column = array_keys($row);
+      $values = array_values($row);
+      $impcol = implode(",",$column);
+      $signos = implode(",",array_fill(0, count($column),'?'));
+      $insert = "INSERT INTO F_PRC ($impcol) VALUES ($signos)";
+      $exec = $this->con->prepare($insert);
+      $exec -> execute($values);
+    }
+    $res = [
+      "msg"=>"correcto en efeito",
+      "idcliente"=>$idclient,
+      "precios"=>count($date)
+    ];
+    return $res;
+  }
+  
 }
