@@ -598,6 +598,7 @@ class ClientOrderController extends Controller{
     }
 
     public function printticket($header){
+        $imagen = env('IMAGENLOCAL');
         $printers = env('IPCAJA');
         $sql = "SELECT CTT1TPV, CTT2TPV, CTT3TPV, CTT4TPV, CTT5TPV, PTT1TPV, PTT2TPV, PTT3TPV, PTT4TPV, PTT5TPV, PTT6TPV, PTT7TPV, PTT8TPV FROM T_TPV WHERE CODTPV = 2";
         $exec = $this->con->prepare($sql);
@@ -610,7 +611,7 @@ class ClientOrderController extends Controller{
 
             try {
                 try{
-                    $logo = EscposImage::load("C:\Users\MERS\Downloads\logo_1.png", false);
+                    $logo = EscposImage::load($imagen, false);
                     $printer->bitImage($logo);
                     $printer->text(" \n");
                     $printer->text(" \n");
