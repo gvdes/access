@@ -598,9 +598,10 @@ class ClientOrderController extends Controller{
     }
 
     public function printticket($header){
+        $documento = env('DOCUMENTO');
         $imagen = env('IMAGENLOCAL');
         $printers = env('IPCAJA');
-        $sql = "SELECT CTT1TPV, CTT2TPV, CTT3TPV, CTT4TPV, CTT5TPV, PTT1TPV, PTT2TPV, PTT3TPV, PTT4TPV, PTT5TPV, PTT6TPV, PTT7TPV, PTT8TPV FROM T_TPV WHERE CODTPV = 2";
+        $sql = "SELECT CTT1TPV, CTT2TPV, CTT3TPV, CTT4TPV, CTT5TPV, PTT1TPV, PTT2TPV, PTT3TPV, PTT4TPV, PTT5TPV, PTT6TPV, PTT7TPV, PTT8TPV FROM T_TPV WHERE CODTPV = $documento";
         $exec = $this->con->prepare($sql);
         $exec->execute();
         $text = $exec->fetch(\PDO::FETCH_ASSOC);//OK
