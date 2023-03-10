@@ -806,4 +806,71 @@ class ProductController extends Controller{
                 }
                 return response()->json("Familiarizaciones creadas correctamente");
     }
+
+    public function productDepure(Request $request){
+        $stor = [];
+        $failstores = [];
+        $products = $request->all();
+        foreach($products as $product){
+            $all [] = "'".$product['products']."'";
+        } 
+        $implode = implode(",",$all);
+        
+        $deleteart = "DELETE FROM F_ART WHERE CODART IN ($implode)";
+        $exec = $this->con->prepare($deleteart);
+        $exec->execute();
+
+        $deletesto = "DELETE FROM F_STO WHERE ARTSTO IN ($implode)";
+        $exec = $this->con->prepare($deletesto);
+        $exec->execute();
+
+        $deletelta = "DELETE FROM F_LTA WHERE ARTLTA IN ($implode)";
+        $exec = $this->con->prepare($deletelta);
+        $exec->execute();
+
+
+        $stores = DB::table('workpoints')->where('_type',2)->where('active',1)->get();
+        foreach($stores as $store){
+          $url = $store->dominio."/access/public/product/depurestor";//se optiene el inicio del dominio de la sucursal
+          $ch = curl_init($url);//inicio de curl
+          $data = json_encode(["products" => $all]);//se codifica el arreglo de los proveedores
+          //inicio de opciones de curl
+          curl_setopt($ch, CURLOPT_POSTFIELDS,$data);//se envia por metodo post
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+          curl_setopt($ch, CURLOPT_HEADER, 0);
+          curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+          curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+          //fin de opciones e curl
+          $exec = curl_exec($ch);//se executa el curl
+          $exc = json_decode($exec);//se decodifican los datos decodificados
+          if(is_null($exc)){//si me regresa un null
+            //   $failstores[] =$store->alias." sin conexion";//la sucursal se almacena en sucursales fallidas
+              $failstores[] =["sucursal"=>$store->alias, "mssg"=>$exec];//la sucursal se almacena en sucursales fallidas
+  
+          }else{
+              $stor[] =["sucursal"=>$store->alias, "mssg"=>$exc];
+          }
+          curl_close($ch);//cirre de curl
+        }
+    }
+
+    public function depureStore(Request $request){
+        $products = $request->products;
+        $implode = implode(",",$products);
+
+        $deleteart = "DELETE FROM F_ART WHERE CODART IN ($implode)";
+        $exec = $this->con->prepare($deleteart);
+        $exec->execute();
+
+        $deletesto = "DELETE FROM F_STO WHERE ARTSTO IN ($implode)";
+        $exec = $this->con->prepare($deletesto);
+        $exec->execute();
+
+        $deletelta = "DELETE FROM F_LTA WHERE ARTLTA IN ($implode)";
+        $exec = $this->con->prepare($deletelta);
+        $exec->execute();
+
+        return response()->json(count($products)." articulos eliminados");
+    }
 }
