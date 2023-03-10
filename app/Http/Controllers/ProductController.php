@@ -856,7 +856,7 @@ class ProductController extends Controller{
     }
 
     public function depureStore(Request $request){
-        $products = "'".$request->products."'";
+        $products = $request->products;
         $implode = implode(",",$products);
 
         $deleteart = "DELETE FROM F_ART WHERE CODART IN ($implode)";
