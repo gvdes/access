@@ -445,7 +445,7 @@ class ClientOrderController extends Controller{
                         "nose"=>$fil['CPRFAC'],
                         "dependiente"=>$create,
                         "total"=>$total,
-                        "observacion"=>"Impuesto al valor agregado del ticket ".$ticket." creado por ".$create,
+                        "observacion"=>$ticket,
                         "cambio"=>$cambio
                     ];
                 }else{
@@ -510,7 +510,7 @@ class ClientOrderController extends Controller{
                         "nose"=>$fil['CPRFAC'],
                         "dependiente"=>$create,
                         "total"=>$total,
-                        "observacion"=>"Impuesto al valor agregado del ticket ".$ticket." creado por ".$create,
+                        "observacion"=>$ticket,
                         "cambio"=>$cambio
                     ];
                 }
@@ -634,17 +634,18 @@ class ClientOrderController extends Controller{
                     $printer->text($header["direccion"]." \n");
                     $printer->text($header["nose"]." \n");
                     $printer->text("_______________________________________________ \n");
-                    $printer->text("Articulo        UD.        PRECIO         TOTAL \n");
+                    $printer->text("  Concepto                             TOTAL \n");
                     $printer->text("_______________________________________________ \n");
                     $printer->setJustification(printer::JUSTIFY_LEFT);
-                    $printer->text("IVA"." "."IMPUESTO AL VALOR AGREGADO"." \n");  
-                    $printer->text("                "."1"."       $".str_pad(number_format($header["precioart"],2),10)."  $".str_pad(number_format($header["precioart"],2),10). " \n");
+                    $printer->text("IVA"."   "."IMPUESTO AL VALOR AGREGADO"."      $".str_pad(number_format($header["precioart"],2),10)." \n");  
+                    // $printer->text("                                    "."  $".str_pad(number_format($header["precioart"],2),10). " \n");
                     $printer->text(" \n");
                     $printer->text(" \n");
                     $printer->setEmphasis(true);
                     $printer->setJustification(printer::JUSTIFY_LEFT);
-                    $printer->text("                            TOTAL:  ");
+                    $printer->text("                             TOTAL: ");
                     $printer->text("$".number_format($header["total"],2)." \n");
+                    $printer->text(" \n");
                     foreach($header['tipfpa'] as $pgo){
                         $codfpa = implode(array_keys($pgo));
                         $valfpa = implode(array_values($pgo));
@@ -656,11 +657,11 @@ class ClientOrderController extends Controller{
                     }
                     $printer->text(" \n");
                     $printer->text(" \n");
-                    $printer->text("N° Articulos : 1"." \n");
+                    $printer->text(" \n");
                     $printer->text("Le atendio :".$header["dependiente"]." \n");
                     $printer->text(" \n");
                     $printer->text(" \n");
-                    $printer->text($header["observacion"]." \n");
+                    $printer->text("TICKET : ".$header["observacion"]." \n");
                     $printer->text(" \n");
                     $printer->text(" \n");
                     $printer->text($text["PTT1TPV"]." \n");
