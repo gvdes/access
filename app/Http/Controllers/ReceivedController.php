@@ -81,8 +81,8 @@ class ReceivedController extends Controller
                                 $not,//observaciones 
                                 $date_format,//fecha actual en formato
                                 $hour,//hora      
-                                900,//quien hizo la factura en este caso vizapp
-                                900,//quien modifico simpre sera el mismo cuando se insertan
+                                27,//quien hizo la factura en este caso vizapp
+                                27,//quien modifico simpre sera el mismo cuando se insertan
                                 1,//iva2
                                 2,//iva3
                                 "02-01-00",//fehca operacion contable simpre esa cambia hasta que se traspasa a contasol
@@ -117,9 +117,9 @@ class ReceivedController extends Controller
                             "folio"=>$folio,
                             "art_contados"=>$count,
                             "can_contada"=>$sum],201);//se retorna el folio de la factura
-                    }else{return response("NO SE PUEDE PROCESAR YA QUE NO HAY ARTICULOS VALIDADOS",400);}
-                }else{return response("NO SE CREA LA FACTURA LA REQUISICION AUN NO ES VALIDADA",400);}
-            }else{return response("EL CODIGO DE REQUISICION NO EXITE",404);}
+                    }else{return response()->json("NO SE PUEDE PROCESAR YA QUE NO HAY ARTICULOS VALIDADOS (LOS PRODUCTOS ESTAN EN 0)",400);}
+                }else{return response()->json("NO SE CREA LA FACTURA LA REQUISICION AUN NO ES VALIDADA",400);}
+            }else{return response()->json("EL CODIGO DE REQUISICION NO EXITE",404);}
         }catch (\PDOException $e){ die($e->getMessage());}
     }
     public function productrequired($id,$rol,$codfac){//metoro de insercion de productos en factusol

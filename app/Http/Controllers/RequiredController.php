@@ -59,8 +59,8 @@ class RequiredController extends Controller
                                 $product,
                                 "02-01-00",                           
                                 "02-01-00",
-                                900,
-                                900,
+                                27,
+                                27,
                                 "GEN",//almacen de donde sale la mercancia siempre sera GEN
                                 "MEXICO",
                                 100,
@@ -107,9 +107,9 @@ class RequiredController extends Controller
                         "folio"=>$folio,
                         "art_contados"=>$count,
                         "can_contada"=>$sum],201);//se retorna el folio de la factura
-                    }else{return response("NO SE PUEDE PROCESAR YA QUE NO HAY ARTICULOS VALIDADOS",400);}
-                }else{return response("NO SE CREA LA FACTURA LA REQUISICION AUN NO ES VALIDADA",400);}
-            }else{return response("EL CODIGO DE REQUISICION NO EXITE",404);}
+                    }else{return response()->json("NO SE PUEDE PROCESAR YA QUE NO HAY ARTICULOS VALIDADOS",400);}
+                }else{return response()->json("NO SE CREA LA FACTURA LA REQUISICION AUN NO ES VALIDADA",400);}
+            }else{return response()->json("EL CODIGO DE REQUISICION NO EXITE",404);}
         }catch (\PDOException $e){ die($e->getMessage());}
     }
     public function productreceived($id,$rol,$codfac){//metoro de insercion de productos en factusol
