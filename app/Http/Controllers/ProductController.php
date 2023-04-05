@@ -366,6 +366,8 @@ class ProductController extends Controller{
                 return ["GEN" => "GEN", "EXH" => "EXH", "DES" => "DE3", "FDT" => "FDT"];
             case 19: //SOT
                 return ["GEN" => "GEN", "EXH" => "EXH", "DES" => "CUA", "FDT" => "FDT"];
+            case 20: //ECO
+                return ["GEN" => "GEN", "EXH" => "EXH", "DES" => "DES", "FDT" => "FDT"];
         }
     }
     public function ReplaceProducts(Request $request){
