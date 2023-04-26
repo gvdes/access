@@ -106,7 +106,7 @@ class ProductController extends Controller{
                 $_status = $group[0]['NPUART'] == 0 ? 1 : 5;
 
                 $refillable = $group[0]['CP4ART'] == "SI" ? 1 : 0;
-        
+
                 return [
                     "code" => mb_convert_encoding($group[0]['CODART'], "UTF-8", "Windows-1252"),
                     "name" => $group[0]['CCOART'],
@@ -133,7 +133,7 @@ class ProductController extends Controller{
             })->values()->all();
 
             return $products;
-        } catch (\Exception $e) { return response()->json($e->getMessage(),500); } 
+        } catch (\Exception $e) { return response()->json($e->getMessage(),500); }
     }
 
     public function UpdatedProductAccess(Request $request){
@@ -271,7 +271,7 @@ class ProductController extends Controller{
         $products = collect($prices)->groupBy('ARTLTA');
         $query_delete = "DELETE FROM F_LTA WHERE ARTLTA = ?;";
         $exec_delete = $this->con->prepare($query_delete);
-        
+
         $keys = array_keys($prices[0]);
         $cols = "";
         foreach($keys as $i => $key){
@@ -368,16 +368,18 @@ class ProductController extends Controller{
                 return ["GEN" => "GEN", "EXH" => "EXH", "DES" => "CUA", "FDT" => "FDT"];
             case 20: //ECO
                 return ["GEN" => "GEN", "EXH" => "EXH", "DES" => "DES", "FDT" => "FDT"];
+            case 22: //BR3
+                return ["GEN" => "GEN", "EXH" => "EXH", "DES" => "DES", "FDT" => "FDT"];
         }
     }
     public function ReplaceProducts(Request $request){
         $updates = $request->all();
-  
+
         foreach($updates as $update){
-    
+
           $original = "'".$update['original']."'";
           $upd = "'".$update['edit']."'";
-          
+
           try{
             $upda = "UPDATE F_LFA SET ARTLFA = $upd WHERE ARTLFA = $original";
             $exec = $this->con->prepare($upda);
@@ -409,13 +411,13 @@ class ProductController extends Controller{
             $deleteean = "DELETE FROM F_EAN WHERE ARTEAN = $original";
             $exec = $this->con->prepare($deleteean);
             $exec -> execute();
-    
+
           }catch (\PDOException $e){ die($e->getMessage());}
-          
+
 
         }
-    
-    
+
+
       return response()->json("CAMBIOS REALIZADOS EN EL SISTEMA :)");
     }
 
@@ -446,7 +448,7 @@ class ProductController extends Controller{
                 "7"=>"7"
             ];
 
-            
+
         foreach($articulos as $art){
             $codigo = trim($art["CODIGO"]);
             $deslarga = trim($art["DESCRIPCION"]);
@@ -465,7 +467,7 @@ class ProductController extends Controller{
             $refart = $art["REFERENCIA"];
             $cp3art = trim($art["UNIDA MED COMPRA"]);
 
-            $articulo  = [              
+            $articulo  = [
                     $codigo,
                     $barcode,
                     $famart,
@@ -500,7 +502,7 @@ class ProductController extends Controller{
             $arti=$exec->fetchall(\PDO::FETCH_ASSOC);
             if($arti){
                 foreach($arti as $arc){//actualizar en factusol
-                    $update = "UPDATE F_ART SET FAMART = "."'".$famart."'"." , CP1ART = "."'".$cat."'"."  , FUMART = "."'".$date_format."'".", EANART = $barcode, PCOART = $cost, UPPART = $PXC , EQUART = $PXC, REFART = "."'".$refart."'"."  , CP3ART = "."'".$cp3art."'"."  WHERE CODART = ? "; 
+                    $update = "UPDATE F_ART SET FAMART = "."'".$famart."'"." , CP1ART = "."'".$cat."'"."  , FUMART = "."'".$date_format."'".", EANART = $barcode, PCOART = $cost, UPPART = $PXC , EQUART = $PXC, REFART = "."'".$refart."'"."  , CP3ART = "."'".$cp3art."'"."  WHERE CODART = ? ";
                     $exec = $this->con->prepare($update);
                     $exec -> execute([$codigo]);
                     $goals["ACTUALIZADOS"][]="Se actualizo el modelo  ".$codigo." con codigo de barras ".$arc["EANART"];}
@@ -512,7 +514,7 @@ class ProductController extends Controller{
                 if($short){
                     foreach($short as $cort)
                         $fail[]="codigo corto ".$cort["CCOART"]." esta asignado ya a ".$cort["CODART"];
-                }else{                       
+                }else{
                     $ean = "SELECT CODART, EANART, CCOART FROM F_ART WHERE EANART = ? ";
                     $exec = $this->con->prepare($corto);
                     $exec -> execute([$art["CB"]]);
@@ -520,7 +522,7 @@ class ProductController extends Controller{
                     if($eana){
                         foreach($eana as $eanart)
                             $fail[]="codigo de barras ".$eanart["EANART"]." esta asignado ya a ".$eanart["CODART"];
-                    }else{                          
+                    }else{
                         $insert = "INSERT INTO F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,FALART,FUMART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART,MPTART,UEQART
                         ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
                         $exec = $this->con->prepare($insert);
@@ -537,14 +539,14 @@ class ProductController extends Controller{
                         }
                         $goals["INSERTADOS"][]="SE INSERTARON EL ARTICULO ".$art["CODIGO"]." CON EXITO";
                     }
-                }           
+                }
             }
         }
-    
+
         return response()->json([
             "GOALS" =>$goals,
             "FAILS" =>$fail]);
-            
+
     }
     public function replypub(request $request){
         $date = $request->date;
@@ -555,14 +557,14 @@ class ProductController extends Controller{
         $articulos=$exec->fetchall(\PDO::FETCH_ASSOC);
         if($articulos){
         $dat =$this->replyprices($date);
-        
+
         $colsTabProds = array_keys($articulos[0]);
-        
+
         foreach($articulos as $art){
             foreach($colsTabProds as $col){ $art[$col] = utf8_encode($art[$col]); }
 
-            
-                
+
+
             $url ="192.168.90.253:1619/access/public/product/insertpub";
             $ch = curl_init($url);
             $data = json_encode(["products" => $art]);
@@ -575,7 +577,7 @@ class ProductController extends Controller{
             $ex = curl_exec($ch);
             curl_close($ch);
 
-        
+
         }
             return response()->json(["products" => $ex,
                                     "prices" => $dat
@@ -583,14 +585,14 @@ class ProductController extends Controller{
         }
         else{return response()->json("no hay articulos que exportar");}
     }
-    
+
     public function replyprices($date){
         $prices = "SELECT F_LTA.* FROM ((F_LTA  INNER JOIN F_LFA ON F_LFA.ARTLFA = F_LTA.ARTLTA) INNER JOIN F_FAC ON F_FAC.TIPFAC = F_LFA.TIPLFA AND F_FAC.CODFAC = F_LFA.CODLFA) WHERE F_FAC.CLIFAC = 20 AND F_LTA.TARLTA NOT IN (7) AND  F_FAC.FECFAC >= #".$date."#";
         $exec = $this->con->prepare($prices);
         $exec -> execute();
         $precios=$exec->fetchall(\PDO::FETCH_ASSOC);
         foreach($precios as $pre){
-        
+
             $url ="192.168.90.253:1619/access/public/product/insertpricespub";
             $ch = curl_init($url);
             $data = json_encode(["prices" => $pre]);
@@ -602,7 +604,7 @@ class ProductController extends Controller{
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
             $ex = curl_exec($ch);
             curl_close($ch);
-            
+
         }
         return response()->json($ex);
     }
@@ -619,7 +621,7 @@ class ProductController extends Controller{
 
             $artupd = "UPDATE  F_ART SET FUMART = DATE(), PCOART = $cost, EANART = $eanart, FAMART = $famart, UPPART = $uppart, CP1ART = $cp1art WHERE CODART = (?)";
             $exec = $this->con->prepare($artupd);
-            $exec -> execute([$request->products["CODART"]]); 
+            $exec -> execute([$request->products["CODART"]]);
 
             $artid = "INSERT INTO  F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART,FALART,FUMART,MPTART,UEQART
             ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATE(),DATE(),?,?)";
@@ -656,11 +658,11 @@ class ProductController extends Controller{
                     "EMP"=>"BOL",
                     "EXH"=>"DES",
                     "FDT"=>"CAS"
-    
+
                 ];
                 foreach($almacenes as $alm){
-            
-        
+
+
                     $insertsto = "INSERT INTO F_STO (ARTSTO,ALMSTO,MINSTO,MAXSTO,ACTSTO,DISSTO) VALUES (?,?,?,?,?,?) ";
                     $exec = $this->con->prepare($insertsto);
                     $exec -> execute([$request->products["CODART"],$alm,0,0,0,0]);
@@ -669,7 +671,7 @@ class ProductController extends Controller{
     }
 
     public function insertpricespub(request $request){
-        
+
 
         if($request->prices["TARLTA"] > 1){
             $updprices =   round($request->prices["PRELTA"]);
@@ -680,10 +682,10 @@ class ProductController extends Controller{
         $insert = "INSERT INTO  F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
         $exec = $this->con->prepare($insert);
         $exec -> execute([$request->prices["TARLTA"],$request->prices["ARTLTA"],0,round($request->prices["PRELTA"])]);}
-        
+
         if($request->prices["TARLTA"] == 2){
             $pricesnew =   round($request->prices["PRELTA"]);
-        
+
             if(($pricesnew >= 0) && ($pricesnew <= 50)){
                 $prai = $pricesnew + 5;
             }elseif(($pricesnew >= 51) && ($pricesnew <= 100)){
@@ -693,9 +695,9 @@ class ProductController extends Controller{
             }elseif(($pricesnew >= 501) && ($pricesnew <= 1000)){
                 $prai = $pricesnew + 50;
             }elseif($pricesnew >= 1001){
-                $prai =  $pricesnew + 100; 
+                $prai =  $pricesnew + 100;
             }
-        
+
             $upda = "UPDATE F_LTA SET PRELTA = $prai WHERE ARTLTA = ? AND TARLTA = 1";
             $exec = $this->con->prepare($upda);
             $exec -> execute([$request->prices["ARTLTA"]]);
@@ -703,7 +705,7 @@ class ProductController extends Controller{
             $inserta = "INSERT INTO  F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
             $exec = $this->con->prepare($inserta);
             $exec -> execute([1,$request->prices["ARTLTA"],0,$prai]);
-        }     
+        }
     }
     public function pricesart(Request $request){
         $date = date("Y/m/d H:i");//se gerera la fecha de el dia de hoy con  formato de fecha y hora
@@ -730,7 +732,7 @@ class ProductController extends Controller{
             }elseif(($mayoreo >= 501) && ($mayoreo <= 1000)){
                 $menudeo = $mayoreo + 50;
             }elseif($mayoreo >= 1001){
-                $menudeo =  $mayoreo + 100; 
+                $menudeo =  $mayoreo + 100;
             }
             if($costo <= $aaa){
                 if($aaa <= $centro){
@@ -768,24 +770,24 @@ class ProductController extends Controller{
                                             $arti = "UPDATE F_ART SET PCOART = $costo, FUMART = "."'".$date_format."'"." WHERE CODART = ? ";
                                             $exec = $this->con->prepare($arti);
                                             $exec -> execute([$pri["CODART"]]);
-                                        }                                       
+                                        }
                                         $goals[]= "producto $modelo actualizado ";
-                                        }else{$fail[]="No se encuentra el modelo $modelo";} 
+                                        }else{$fail[]="No se encuentra el modelo $modelo";}
                                 }else{$fail[]="$modelo precio DOCENA mas alto que MAYOREO ";}
                             }else{$fail[]="$modelo precio CAJA mas alto que DOCENA ";}
                         }else{$fail[]="$modelo precio ESPECIAL mas alto que CAJA ";}
                     }else{$fail[]="$modelo precio CENTRO mas alto que ESPECIAL ";}
-                }else{$fail[]="$modelo precio AAA mas alto que CENTRO ";}             
+                }else{$fail[]="$modelo precio AAA mas alto que CENTRO ";}
             }else{$fail[]="$modelo precio COSTO mas alto que AAA";}
         }
         return response()->json([
             "actualizados"=>$goals,
             "revisar"=>$fail
-        ]);        
+        ]);
 
     }
     public function familiarizacion(){//metodo para replicar las familiarizaciones en mysql
-        
+
         DB::statement("SET SQL_SAFE_UPDATES = 0;");//se desactiva safe update
         DB::statement("SET FOREIGN_KEY_CHECKS = 0;");//se desactivan las llaves foraneas
         DB::statement("truncate table product_variants;");//se vacia la tabla de familiarizaciones
@@ -798,13 +800,13 @@ class ProductController extends Controller{
             $art=$exec->fetchall(\PDO::FETCH_ASSOC);//se executa
         }catch (\PDOException $e){ die($e->getMessage());}
                 foreach($art as $artic){
-                    $pro = DB::table('products')->where('code',$artic["ARTEAN"])->value('id');// se busca el id de el producto que se va a familiarizar             
+                    $pro = DB::table('products')->where('code',$artic["ARTEAN"])->value('id');// se busca el id de el producto que se va a familiarizar
                     $product = [//se crea el arreglo de insercion
                         "barcode"=>$artic["EANEAN"],
                         "stock"=>0,
                         "_product"=>$pro
                     ];
-                    $ins = DB::table('product_variants')->insert($product);//se inserta el arreglo 
+                    $ins = DB::table('product_variants')->insert($product);//se inserta el arreglo
                 }
                 return response()->json("Familiarizaciones creadas correctamente");
     }
@@ -815,9 +817,9 @@ class ProductController extends Controller{
         $products = $request->all();
         foreach($products as $product){
             $all [] = "'".$product['products']."'";
-        } 
+        }
         $implode = implode(",",$all);
-        
+
         $deleteart = "DELETE FROM F_ART WHERE CODART IN ($implode)";
         $exec = $this->con->prepare($deleteart);
         $exec->execute();
@@ -849,7 +851,7 @@ class ProductController extends Controller{
           if(is_null($exc)){//si me regresa un null
             //   $failstores[] =$store->alias." sin conexion";//la sucursal se almacena en sucursales fallidas
               $failstores[] =["sucursal"=>$store->alias, "mssg"=>$exec];//la sucursal se almacena en sucursales fallidas
-  
+
           }else{
               $stor[] =["sucursal"=>$store->alias, "mssg"=>$exc];
           }
