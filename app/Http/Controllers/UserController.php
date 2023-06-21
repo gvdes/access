@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 
 class UserController extends Controller{
     /**
@@ -10,15 +12,15 @@ class UserController extends Controller{
      *
      * @return void
      */
-    public function __construct(){
-        try{
-            $access = env('ACCESS_FILE');
-            $db = new \PDO("odbc:DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};charset=UTF-8; DBQ=".$access."; Uid=; Pwd=;");
-            $this->con = $db;
-        }catch(PDOException $e){
-            return response()->json(["message" => "Algo salio mal con la conexión a la base de datos"]);
-        }
-    }
+    // public function __construct(){
+    //     try{
+    //         $access = env('ACCESS_FILE');
+    //         $db = new \PDO("odbc:DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};charset=UTF-8; DBQ=".$access."; Uid=; Pwd=;");
+    //         $this->con = $db;
+    //     }catch(PDOException $e){
+    //         return response()->json(["message" => "Algo salio mal con la conexión a la base de datos"]);
+    //     }
+    // }
 
     public function getUsers(){
         $query = "SELECT CODAGE, FALAGE, NOMAGE FROM F_AGE";
@@ -69,13 +71,13 @@ class UserController extends Controller{
             }
             $query_select = "SELECT count(*) FROM F_AGE WHERE CODAGE = ?";
             $exec_select = $this->con->prepare($query_select);
-        
+
             $query_update = "UPDATE F_AGE SET ".$toUpdate." WHERE CODAGE = ?";
             $exec_update = $this->con->prepare($query_update);
-        
+
             $query_insert = "INSERT INTO F_AGE (".$cols.") VALUES(".$values.")";
             $exec_insert = $this->con->prepare($query_insert);
-        
+
             $response = [];
             foreach($request->users as $key => $user){
                 $exec_select->execute([$user["CODAGE"]]);
@@ -134,7 +136,7 @@ class UserController extends Controller{
           if(is_null($exc)){//si me regresa un null
               $failstores[] =$store->alias." sin conexion";//la sucursal se almacena en sucursales fallidas
             //   $failstores[] =["sucursal"=>$store->alias, "mssg"=>$exec];//la sucursal se almacena en sucursales fallidas
-  
+
           }else{
               $stor[] =["sucursal"=>$store->alias, "mssg"=>$exc];
           }
@@ -145,8 +147,8 @@ class UserController extends Controller{
             "fail"=>$failstores,
             "replicados"=>$fil,
           ];
-    
-    
+
+
           return response()->json($res);
     }
 
@@ -160,6 +162,78 @@ class UserController extends Controller{
             "msg"=>"LISTO BROU"
         ];
         return $res;
+
+    }
+
+    public function highusers(Request $request){
+        $false = [
+            "nick"=>[],
+            "_wp_workpoint"=>[],
+            "_rol"=>[]
+        ];
+        $goals = [];
+        $req = $request->all();
+        if($req){
+            foreach($req as $requi){
+                $nick = $requi['nick'];
+                $existnick = DB::table('accounts')->where('nick',$nick)->first();
+                if($existnick){
+                    $false['nick'][] = "El nick ".$nick." ya existe";
+                }else{
+                    $name = trim($requi['complete_name']);
+                    $space = substr_count($name, ' ');
+                    if($space === 2){
+                        $nom = explode(" ",$name);
+                        $names = $nom[0];
+                        $surname_pat = $nom[1];
+                        $surname_mat = $nom[2];
+                    }elseif($space === 3){
+                        $nom = explode(" ",$name);
+                        $names = $nom[0]." ".$nom[1];
+                        $surname_pat = $nom[2];
+                        $surname_mat = $nom[3];
+                    }
+                    $wp = $requi['id_wp'];
+                    $existwp = DB::table('workpoints')->where('id',$wp)->first();
+                    if($existwp){
+                        $rol = $requi['_rol'];
+                        $existrol = DB::table('roles')->where('id',$rol)->first();
+                        if($existrol){
+                            $insert = [
+                                "nick"=>$nick,
+                                "password"=>'$2y$10$l5xgt3LlOM0WQFlbJcvTkOOpaBW/S.1RwWffuTmaeMUtB6ahSzhBW',
+                                "picture"=>'',
+                                "names"=>$names,
+                                "surname_pat"=>$surname_pat,
+                                "surname_mat"=>$surname_mat,
+                                "change_password"=>1,
+                                "_wp_principal"=>$wp,
+                                "_rol"=>$rol,
+                                "created_at"=>Carbon::now()->subHour(),
+                                "updated_at"=>Carbon::now()->subHour()
+                            ];
+                            $dbins = DB::table('accounts')->insert($insert);
+                            if($dbins){
+                            $goals[] = $insert;
+                            }else{
+                                $false['insert'][] = "no se pudo insertar el usuario ".$nick;
+                            }
+                        }else{
+                            $false['_rol'][] = "El id del rol ".$rol." no existe en el usuario ".$nick;
+                        }
+                    }else{
+                        $false['_wp_workpoint'][] = "El id de la sucursal ".$wp." no existe en el usuario ".$nick;
+                    }
+                }
+            }
+            $res = [
+                'goals'=>$goals,
+                'falsse'=>$false
+            ];
+            return response()->json($res);
+        }else {
+            return response()->json("No se recibio ningun parametro",404);
+        }
 
     }
 }

@@ -81,6 +81,7 @@ $router->group(['prefix' => 'user'], function () use ($router){
     $router->post('/sync', 'UserController@syncUsers');
     $router->get('/permission', 'UserController@permission');
     $router->post('/replypermission', 'UserController@replypermission');
+    $router->post('/high', 'UserController@highusers');
 });
 
 $router->group(['prefix' => 'compras'], function () use ($router){
@@ -103,6 +104,7 @@ $router->group(['prefix' => 'withdrawals'], function () use ($router){
 $router->group(['prefix' => 'clientOrder'], function () use ($router){
     $router->post('/create', 'ClientOrderController@createHeader');
     $router->post('/createRequisition', 'ClientOrderController@createHeaderRequisition');
+    $router->post('/modifyfac','ClientOrderController@especialprice');
 });
 
 $router->group(['prefix' => 'providerOrder'], function () use ($router){

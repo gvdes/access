@@ -193,7 +193,7 @@ class ClientOrderController extends Controller{
         }else{
             return 1;
         }
-    } 
+    }
 
     public function InvoiceRequired(Request $request){
         $required = $request->folio;
@@ -254,7 +254,7 @@ class ClientOrderController extends Controller{
         }
         return $body;
     }
-  
+
     public function ticket(Request $request){
         $type = $request->serie;
         $cod = $request->folio;
@@ -298,7 +298,7 @@ class ClientOrderController extends Controller{
     }
 
     public function iva(Request $request){
-        $date_format = Carbon::now()->format('d/m/Y');//formato fecha factusol 
+        $date_format = Carbon::now()->format('d/m/Y');//formato fecha factusol
         $year = Carbon::now()->format('Y');//ano de ejercicio
         $idano = Carbon::now()->format('ymd');//complemento para id de tpvsol
         $date = date("Y/m/d H:i");//horario para la hora
@@ -337,7 +337,7 @@ class ClientOrderController extends Controller{
                     "ticketIva"=>[
                         "fecha"=>$ivpag['fecha'],
                         "ticket"=>$ivpag['ticket'],
-                        "total"=>doubleval($ivpag['total']),  
+                        "total"=>doubleval($ivpag['total']),
                         ]
                 ];
 
@@ -363,7 +363,7 @@ class ClientOrderController extends Controller{
                 $max = $exec->fetch(\PDO::FETCH_ASSOC);
                 $codigo = $max['maxi'] + 1;
                 $total = $fil['TOTFAC'] * $iva;
-                
+
                 $contador = 1;
 
                 if(($efectivo > 0) && ($fpaval == 0 )){
@@ -385,7 +385,7 @@ class ClientOrderController extends Controller{
                 if(count($pago) == 2){
                     $twopay = $pago[0][$fpaid];
                     $payment = $pago[1]['EFE'];
-                    
+
                     $fpacod = implode(",",array_keys($pago[1]));
                     $cambio = round(($payment + $twopay) - $total,2);
 
@@ -399,7 +399,7 @@ class ClientOrderController extends Controller{
                         return response()->json($res,401);
                     }
                     $column = ["TIPFAC","CODFAC","REFFAC","FECFAC", "ALMFAC","AGEFAC","CLIFAC","CNOFAC","CDOFAC","CPOFAC","CCPFAC","CPRFAC","TELFAC","NET1FAC","BAS1FAC","TOTFAC","FOPFAC","OB1FAC","VENFAC","HORFAC","USUFAC","USMFAC","TIVA2FAC","TIVA3FAC","EDRFAC","FUMFAC","BCOFAC","TPVIDFAC","ESTFAC","TERFAC","DEPFAC","EFEFAC","CAMFAC","EFSFAC"];
-                
+
                     $factura = [
                         "1",
                         $codigo,
@@ -521,7 +521,7 @@ class ClientOrderController extends Controller{
                 $sql = "INSERT INTO F_FAC ($impcol) VALUES ($signos)";//se crea el query para insertar en la tabla
                 $exec = $this->con->prepare($sql);
                 $exec -> execute($factura);
-                
+
                 $folio = "1"."-".str_pad($codigo, 6, "0", STR_PAD_LEFT);//se obtiene el folio de la factura
                 $header['ticket'] = $folio;
                 $insva = [
@@ -543,19 +543,19 @@ class ClientOrderController extends Controller{
                 $exec -> execute($insva);//envia el arreglo
 
                 foreach($pago as $row){
-                    
+
                     $codfpa = implode(array_keys($row));
                     $valfpa = implode(array_values($row));
-                     
+
                     $cobcod = "SELECT *  FROM F_FPA WHERE CODFPA ="."'".$codfpa."'";
                     $exec = $this->con->prepare($cobcod);
                     $exec->execute();
                     $codigocobro = $exec->fetch(\PDO::FETCH_ASSOC);
-    
+
                     $faclco = "INSERT INTO F_LCO (TFALCO,CFALCO,LINLCO,FECLCO,IMPLCO,CPTLCO,FPALCO,MULLCO,TPVIDLCO,TERLCO) VALUES (?,?,?,?,?,?,?,?,?,?) ";
                     $exec = $this->con->prepare($faclco);
                     $exec->execute([1,$codigo,$contador,$date_format,$valfpa,$codigocobro['DESFPA'],$codfpa,$cobro,$idterminal,$codter['CODTER']]);
-    
+
                     $inscob = "INSERT INTO F_COB (CODCOB,FECCOB,IMPCOB,CPTCOB) VALUES (?,?,?,?)";
                     $exec = $this->con->prepare($inscob);
                     $exec->execute([$cobro,$date_format,$valfpa,$codigocobro['DESFPA']]);
@@ -570,7 +570,7 @@ class ClientOrderController extends Controller{
                 }
                 $header['desfpa'] = $codigocobro['DESFPA'];
                 $header['tipfpa']   = $pagoenv;
-        
+
                 $updatestock = "UPDATE F_STO SET ACTSTO = ACTSTO - 1, DISSTO = DISSTO - 1 WHERE ARTSTO = 'IVA' AND ALMSTO = 'GEN'";
                 $exec = $this->con->prepare($updatestock);
                 $exec->execute();
@@ -606,7 +606,7 @@ class ClientOrderController extends Controller{
         $exec->execute();
         $text = $exec->fetch(\PDO::FETCH_ASSOC);//OK
         try{
-            $connector = new NetworkPrintConnector($printers, 9100, 3);  
+            $connector = new NetworkPrintConnector($printers, 9100, 3);
             $printer = new Printer($connector);
         }catch(\Exception $e){ return null;}
 
@@ -637,7 +637,7 @@ class ClientOrderController extends Controller{
                     $printer->text("  Concepto                             TOTAL \n");
                     $printer->text("_______________________________________________ \n");
                     $printer->setJustification(printer::JUSTIFY_LEFT);
-                    $printer->text("IVA"."   "."IMPUESTO AL VALOR AGREGADO"."      $".str_pad(number_format($header["precioart"],2),10)." \n");  
+                    $printer->text("IVA"."   "."IMPUESTO AL VALOR AGREGADO"."      $".str_pad(number_format($header["precioart"],2),10)." \n");
                     // $printer->text("                                    "."  $".str_pad(number_format($header["precioart"],2),10). " \n");
                     $printer->text(" \n");
                     $printer->text(" \n");
@@ -675,15 +675,64 @@ class ClientOrderController extends Controller{
                     $printer -> cut();
                     $printer -> close();
                 }catch(Exception $e){}
-                
+
             } finally {
                 $printer -> close();
             }
             return "TICKET IMPRIMIDO";
 
-            
-    
+
+
     }
-            
+
+
+    public function especialprice(Request $request){
+        $goal =[];
+        $fail = [];
+
+        // $exec->fetch(\PDO::FETCH_ASSOC);
+        $cliente = $request->cliente;
+        $fecha = $request->fecha;
+
+        $lfaupdat = "UPDATE ((F_LFA
+        INNER JOIN F_FAC ON F_LFA.TIPLFA&'-'&F_LFA.CODLFA = F_FAC.TIPFAC&'-'&F_FAC.CODFAC)
+        INNER JOIN F_PRC ON F_PRC.ARTPRC = F_LFA.ARTLFA)
+        SET F_LFA.PRELFA = F_PRC.PREPRC, F_LFA.TOTLFA = F_LFA.CANLFA * F_PRC.PREPRC
+        WHERE F_FAC.CLIFAC = ".$cliente." AND F_PRC.CLIPRC = ".$cliente." AND F_FAC.FECFAC >= #".$fecha."#";
+
+        $exec = $this->con->prepare($lfaupdat);
+        $result = $exec->execute();
+
+        $selectlfa = "SELECT
+        F_FAC.TIPFAC&'-'&F_FAC.CODFAC AS CODIGO,
+        SUM(F_LFA.TOTLFA) AS TOTAL
+        FROM F_FAC
+        INNER JOIN F_LFA ON F_LFA.TIPLFA&'-'&F_LFA.CODLFA = F_FAC.TIPFAC&'-'&F_FAC.CODFAC
+        WHERE F_FAC.CLIFAC = ".$cliente." AND F_FAC.FECFAC = #".$fecha."#
+        GROUP BY F_FAC.TIPFAC&'-'&F_FAC.CODFAC";
+
+        $exec = $this->con->prepare($selectlfa);
+        $exec->execute();
+        $rows = $exec->fetchall(\PDO::FETCH_ASSOC);
+
+        foreach($rows as $row){
+            $factura = "'".$row['CODIGO']."'";
+            $total = $row['TOTAL'];
+            $updatefac = "UPDATE F_FAC SET NET1FAC = ".$total.",BAS1FAC = ".$total.", TOTFAC = ".$total.", EFEFAC =".$total."  WHERE F_FAC.TIPFAC&'-'&F_FAC.CODFAC = ".$factura;
+            $exec = $this->con->prepare($updatefac);
+            $exec->execute();
+
+            $updatelco = "UPDATE F_LCO SET IMPLCO = ".$total." WHERE TFALCO&'-'&CFALCO = ".$factura;
+            $exec = $this->con->prepare($updatelco);
+            $exec->execute();
+        }
+        return "llleimememes";
+
+
+
+
+
+        }
+
 }
 

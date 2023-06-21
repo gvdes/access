@@ -110,7 +110,7 @@ class ClientOrderController extends Controller{
         $exec->execute([$code]);
         $row = $exec->fetch(\PDO::FETCH_ASSOC);
         $new_stock =  $reserve ? $row["ACTSTO"] - $amount : $row["ACTSTO"] + $amount; //Se reserva o libera la mercancia
-        
+
         return $exec_update->execute([$new_stock, $code]);
     }
 
