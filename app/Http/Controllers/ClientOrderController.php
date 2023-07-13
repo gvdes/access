@@ -283,7 +283,7 @@ class ClientOrderController extends Controller{
                 return response()->json($res,401);
             }else{
             $res = [
-                "cliente"=>$fil['cliente'],
+                "cliente"=>utf8_encode($fil['cliente']),
                 "fecha"=>$fil['fecha'],
                 "ticket"=>$fil['ticket'],
                 "total"=>doubleval($fil['total'])

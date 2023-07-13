@@ -59,6 +59,7 @@ $router->group(['prefix' => 'product'], function () use ($router){
     $router->get('/fam','ProductController@familiarizacion');
     $router->get('/depure','ProductController@productDepure');
     $router->post('/depurestor','ProductController@depureStore');
+    $router->post('/insart','ProductController@insertart');
 });
 
 $router->group(['prefix' => 'client'], function () use ($router){

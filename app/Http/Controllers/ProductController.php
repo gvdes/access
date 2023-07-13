@@ -877,4 +877,37 @@ class ProductController extends Controller{
 
         return response()->json(count($products)." articulos eliminados");
     }
+
+    public function insertart(Request $request){
+        $fails = [
+            "sucursal"=>[],
+            "categoria"=>[],
+            "codigo_barras"=>[],
+            "codigo_corto"=>[]
+        ];
+
+        $goals = [
+            "sucursal"=>[],
+            "insertados"=>[],
+            "actualizados"=>[]
+        ];
+        $articulos = $request->all();
+        $sucu = $request->sucursal;
+        $sucursal = $sucu == null ? "all" : $sucu;
+        if($sucursal == "all"){
+
+            $stores= DB::table('workpoints')->where('_type',2)->where('active',1)->get();
+            foreach($stores as $stor){
+                $url = $stor->dominio."/access/public/product/insartstore";
+
+
+            }
+            return $url;
+        }else{return $sucu;
+
+        }
+    }
+    public function insartstore(Request $request){
+
+    }
 }
