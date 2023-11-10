@@ -28,11 +28,15 @@ class TicketController extends Controller{
         $printerQuery = $wmi->ExecQuery('SELECT * FROM Win32_Printer');
 
         foreach ($printerQuery as $printer) {
-            echo 'Nombre de la impresora: ' . $printer->Name . '<br>';
-            echo 'Puerto de la impresora: ' . $printer->PortName . '<br>';
-            echo 'IP de la impresora: ' . $this->getPrinterIPAddress($printer->PortName) . '<br>';
-            echo '<br>';
+            $impr []= [
+                "nombre"=>$printer->Name,
+                "puerto"=>$printer->PortName,
+                "ip"=>$this->getPrinterIPAddress($printer->PortName)
+            ];
         }
+        return array_filter($imp, function($e){
+            return $e['ip'] <> "No disponible";
+        });
 
 
     }
