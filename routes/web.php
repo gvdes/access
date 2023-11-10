@@ -145,3 +145,10 @@ $router->group(['prefix' => 'iva'], function () use ($router){
     $router->post('/create', 'ClientOrderController@iva');
     $router->get('/prueba', 'ClientOrderController@index');
 });
+
+$router->group(['prefix' => 'modify'], function () use ($router){
+    $router->get('/getTicket', 'ClientOrderController@getTicket');
+    $router->get('/getPrinter', 'TicketController@getPrinter');
+    $router->post('/newmod', 'TicketController@newMod');
+
+});

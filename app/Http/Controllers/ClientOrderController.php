@@ -732,7 +732,47 @@ class ClientOrderController extends Controller{
 
 
 
-        }
+    }
 
+    public function getTicket(Request $request){
+        $type = $request->serie;
+        $cod = $request->folio;
+        $ticket = "'".$type."-".$cod."'";
+        $select = "SELECT TIPFAC&'-'&CODFAC as ticket, TOTFAC as total, CNOFAC AS cliente , FECFAC as fecha FROM F_FAC WHERE TIPFAC&'-'&CODFAC =".$ticket;
+        $exec = $this->con->prepare($select);
+        $exec->execute();
+        $fil = $exec->fetch(\PDO::FETCH_ASSOC);
+        if($fil){
+            $tick = $type."-".$cod;
+            $exist = "MDV-".$tick."%";
+            $cobiv = "SELECT TIPFAC&'-'&CODFAC as ticket, TOTFAC as total, CNOFAC AS cliente , FECFAC as fecha  FROM F_FAC WHERE TDRFAC&'-'&CDRFAC = ".$ticket;
+            $exec = $this->con->prepare($cobiv);
+            $exec->execute();
+            $ivpag = $exec->fetch(\PDO::FETCH_ASSOC);
+            if($ivpag){
+                $res = [
+                    "message"=>"Ticket Modificado en ticket ".$ivpag['ticket'],
+                    "ticketIva"=>[
+                        "fecha"=>$ivpag['fecha'],
+                        "ticket"=>$ivpag['ticket'],
+                        "total"=>doubleval($ivpag['total']),
+                    ]
+                ];
+                return response()->json($res,401);
+            }else{
+            $res = [
+                "cliente"=>utf8_encode($fil['cliente']),
+                "fecha"=>$fil['fecha'],
+                "ticket"=>$fil['ticket'],
+                "total"=>doubleval($fil['total'])
+            ];
+            return response()->json($res,200);}
+        }else{
+            $res = [
+                "message"=>"No se encuentra el ticket ".$ticket
+            ];
+            return response()->json($res,404);
+        }
+    }
 }
 
