@@ -28,9 +28,11 @@ class TicketController extends Controller{
         $printerQuery = $wmi->ExecQuery('SELECT * FROM Win32_Printer');
 
         foreach ($printerQuery as $printer) {
-            $slic[] = [$this->getPrinterIPAddress($printer->PortName)];
+            echo 'Nombre de la impresora: ' . $printer->Name . '<br>';
+            echo 'Puerto de la impresora: ' . $printer->PortName . '<br>';
+            echo 'IP de la impresora: ' . $this->getPrinterIPAddress($printer->PortName) . '<br>';
+            echo '<br>';
         }
-        return $slic;
 
 
     }
