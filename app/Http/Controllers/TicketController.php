@@ -34,7 +34,7 @@ class TicketController extends Controller{
                 "ip"=>$this->getPrinterIPAddress($printer->PortName)
             ];
         }
-        return array_filter($imp, function($e){
+        return array_filter($impr, function($e){
             return $e['ip'] <> "No disponible";
         });
 
