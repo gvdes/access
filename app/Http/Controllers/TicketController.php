@@ -39,7 +39,10 @@ class TicketController extends Controller{
         });
 
         if($print){
-            $imp = $print;
+            foreach($print as $prn){
+                $imp[] = $prn;
+            }
+
         }else{
             $imp =  [[
                 "name"=>"IMP DEFAULT",
