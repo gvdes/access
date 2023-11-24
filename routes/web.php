@@ -149,6 +149,15 @@ $router->group(['prefix' => 'iva'], function () use ($router){
 $router->group(['prefix' => 'modify'], function () use ($router){
     $router->get('/getTicket', 'ClientOrderController@getTicket');
     $router->get('/getPrinter', 'TicketController@getPrinter');
+    $router->get('/getProduct', 'TicketController@getProduct');
+    $router->get('/getClient', 'TicketController@getClient');
+    $router->get('/getPrices', 'TicketController@getPrices');
+    $router->get('/vales', 'TicketController@vales');
     $router->post('/newmod', 'TicketController@newMod');
+    $router->post('/modificacion', 'TicketController@modificacion');
+    $router->post('/nwtck', 'TicketController@nwtck');
+});
 
+$router->group(['prefix' => 'reports'], function () use ($router){
+    $router->get('/getCash', 'ReportController@getCash');
 });
