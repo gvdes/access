@@ -80,10 +80,14 @@ class TicketController extends Controller{
             $tck = $exec->fetch(\PDO::FETCH_ASSOC);
             if($tck){
                 $fpa = "SELECT LINLCO, IMPLCO AS IMPORTE, CPTLCO, FPALCO FROM F_LCO WHERE TFALCO&'-'&CFALCO = "."'".$ticket."'";
+                // $fpa = "SELECT EFEFAC, EFSFAC, EFVFAC FROM F_FAC WHERE TIPFAC&'-'&CODFAC = "."'".$ticket."'";
                 $exec = $this->con->prepare($fpa);
                 $exec->execute();
                 $fpas = $exec->fetchall(\PDO::FETCH_ASSOC);
-
+                $inx = array_search('EFE', array_column($fpas,'FPALCO'));
+                if(is_numeric($inx)){
+                    $fpas[$inx]['IMPORTE'] = $tck['EFEFAC'] ;
+                }
                 $prd = "SELECT * FROM F_LFA WHERE TIPLFA&'-'&CODLFA = "."'".$ticket."'";
                 $exec = $this->con->prepare($prd);
                 $exec->execute();
@@ -734,6 +738,7 @@ class TicketController extends Controller{
     }
 
     public function printck($header){
+        $imagen = env('IMAGENLOCAL');
         $documento = env('DOCUMENTO');
         $printers = $header['impresora'];
         // $printers = "192.168.10.224";
@@ -749,8 +754,8 @@ class TicketController extends Controller{
             try {
                 try{
                     // if(file_exists($imagen)){
-                    // $logo = EscposImage::load($imagen, false);
-                    // $printer->bitImage($logo);
+                    // $logo = EscposImage::load($imagen);
+                    // $printer->bitImageColumnFormat($logo);
                     // }
                     $printer->setJustification(printer::JUSTIFY_LEFT);
                     $printer->text(" \n");
@@ -790,7 +795,7 @@ class TicketController extends Controller{
                     $printer->text(" \n");
                     $printer->setJustification(printer::JUSTIFY_RIGHT);
                     $printer->setEmphasis(true);
-                    $printer->text(str_pad("TOTAL: ",15));
+                    $printer->text(str_pad("TOTAL: ",13));
                     $printer->text("$".number_format($header["total"],2)." \n");
                     $printer->text(" \n");
                     $printer->setEmphasis(false);
@@ -798,8 +803,12 @@ class TicketController extends Controller{
                         $despa = $pago['FPALCO'] == 'EFE' ? "Efectivo:" : $pago['CPTLCO'].":";
                         // $padding = 54 - strlen($despa);
                         $printer->text(mb_convert_encoding($despa,'UTF-8'));
-                        $printer->text(str_pad('',11,' '));
+                        $printer->text(str_pad('',7,' '));
                         $printer->text(str_pad("$".number_format($pago['IMPORTE'],2),-13)." \n");
+                    }
+                    if($header['cambio'] <> 0){
+                        $printer->text(str_pad("Cambio: ",14));
+                        $printer->text("$".number_format($header['cambio'],2)." \n");
                     }
                     $printer->setJustification(printer::JUSTIFY_LEFT);
                     $printer->text(" \n");
