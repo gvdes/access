@@ -68,4 +68,115 @@ class ReportController extends Controller{
         return response()->json( mb_convert_encoding($res,'UTF-8'),200);
     }
 
+    public function getSales(){
+        $report = [
+            "salesant"=>0,
+            "salesact"=>0,
+            "saleshoy"=>0,
+            "tiketsant"=>0,
+            "tiketsact"=>0,
+            "hoytck"=>0,
+            "ventasdepmonth"=>[],
+            "ventasdepday"=>[],
+        ];
+        $year =  date("Y");
+        $month = date("m");
+        $day = date("d");
+
+        $name = env('namedb');
+        $ruta = env('rout');
+        $slash = '\\';
+        $concat = $ruta.$slash.$name;
+
+        $ant = $concat.($year-1) .".accdb";
+
+        $select = "SELECT SUM(TOTFAC) as TOTAL FROM F_FAC WHERE month(FECFAC) = $month AND day(FECFAC) <= $day";
+        $tickets = "SELECT COUNT(*) as TICKETS FROM F_FAC WHERE month(FECFAC) = $month AND day(FECFAC) <= $day";
+
+        if(file_exists($ant)){
+            try{
+                $dbd = new \PDO("odbc:DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};charset=UTF-8; DBQ=".$ant."; Uid=; Pwd=;");
+                $this->cone = $dbd;
+            }catch(PDOException $e){
+                return response()->json(["message" => "Algo salio mal con la conexión a la base de datos"]);
+            }
+
+            $antes = $this->cone->prepare($select);
+            $antes->execute();
+            $antessale = $antes->fetch(\PDO::FETCH_ASSOC);
+            $report['salesant'] = $antessale['TOTAL'];
+
+            $tckant = $this->cone->prepare($tickets);
+            $tckant->execute();
+            $tckantsale = $tckant->fetch(\PDO::FETCH_ASSOC);
+            $report['tiketsant'] = $tckantsale['TICKETS'];
+        }
+
+            $act = $this->con->prepare($select);
+            $act->execute();
+            $actsale = $act->fetch(\PDO::FETCH_ASSOC);
+            if($actsale){
+                $report['salesact'] = $actsale['TOTAL'];
+            }
+
+            $tckact = $this->con->prepare($tickets);
+            $tckact->execute();
+            $tckactsale = $tckact->fetch(\PDO::FETCH_ASSOC);
+            if($tckactsale){
+                $report['tiketsact'] = $tckactsale['TICKETS'];
+            }
+
+
+            $venthoy = "SELECT SUM(TOTFAC) AS TOTAL FROM F_FAC WHERE FECFAC = date()";
+            $hoy = $this->con->prepare($venthoy);
+            $hoy->execute();
+            $hoysale = $hoy->fetch(\PDO::FETCH_ASSOC);
+            if($hoysale){
+                $report['saleshoy'] = $hoysale['TOTAL'];
+            }
+
+
+            $tckhoy = "SELECT COUNT(*) AS TOTAL FROM F_FAC WHERE FECFAC = date()";
+            $hoytck = $this->con->prepare($tckhoy);
+            $hoytck->execute();
+            $hoytcksale = $hoytck->fetch(\PDO::FETCH_ASSOC);
+            if($hoytcksale){
+                $report['hoytck'] = $hoytcksale['TOTAL'];
+            }
+
+            $ventdepmonth = "SELECT
+            T_DEP.NOMDEP,
+            SUM(F_FAC.TOTFAC) AS VENTA
+            FROM T_DEP
+            INNER JOIN F_FAC ON F_FAC.DEPFAC = T_DEP.CODDEP
+            WHERE MONTH(F_FAC.FECFAC) = $month AND DAY(F_FAC.FECFAC) <= $day
+            GROUP BY T_DEP.NOMDEP
+            ORDER BY SUM(F_FAC.TOTFAC) DESC
+            ";
+            $vendep = $this->con->prepare($ventdepmonth);
+            $vendep->execute();
+            $vendepsale = $vendep->fetchall(\PDO::FETCH_ASSOC);
+            if($vendepsale){
+                $report['ventasdepmonth'] = $vendepsale;
+            }
+
+            $ventdepday = "SELECT
+            T_DEP.NOMDEP,
+            SUM(F_FAC.TOTFAC) AS VENTA
+            FROM T_DEP
+            INNER JOIN F_FAC ON F_FAC.DEPFAC = T_DEP.CODDEP
+            WHERE F_FAC.FECFAC = DATE()
+            GROUP BY T_DEP.NOMDEP
+            ORDER BY SUM(F_FAC.TOTFAC) DESC
+            ";
+            $vendepd = $this->con->prepare($ventdepday);
+            $vendepd->execute();
+            $vendepdsale = $vendepd->fetchall(\PDO::FETCH_ASSOC);
+            if($vendepdsale){
+                $report['ventasdepday'] = $vendepdsale;
+            }
+            return  mb_convert_encoding($report,'UTF-8');
+
+    }
+
 }
