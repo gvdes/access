@@ -72,7 +72,7 @@ class TicketController extends Controller{
         $ticket = $request->serie."-".$request->folio;
         if($tipo == "Devolucion"){
             $ala = $this->devolucion($ticket,$request->serie,$request->mot,$request->create,$request->folio,$request->print);
-            return resonse()->json($ala,200);
+            return response()->json($ala,200);
         }else if($tipo == "Reimpresion"){
             $existck = "SELECT * FROM F_FAC WHERE TIPFAC&'-'&CODFAC = "."'".$ticket."'";
             $exec = $this->con->prepare($existck);
