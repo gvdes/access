@@ -23,6 +23,46 @@ class ReportController extends Controller{
         }
     }
 
+    public function getPrinter(){
+        $pri = env('IPCAJA');
+        $wmi = new \COM('winmgmts:{impersonationLevel=impersonate}//./root/cimv2');
+        $printerQuery = $wmi->ExecQuery('SELECT * FROM Win32_Printer');
+
+        foreach ($printerQuery as $printer) {
+            $impr []= [
+                "name"=>$printer->Name,
+                "ip"=>$this->getPrinterIPAddress($printer->PortName)
+            ];
+        }
+        $print = array_filter($impr, function($e){
+            return $e['ip'] <> "No disponible";
+        });
+
+        if($print){
+            foreach($print as $prn){
+                $imp[] = $prn;
+            }
+
+        }else{
+            $imp =  [[
+                "name"=>"IMP DEFAULT",
+                "ip"=>$pri
+            ]];
+        }
+        return $imp;
+    }
+
+    private function getPrinterIPAddress($portName){
+        $wmi = new \COM('winmgmts:{impersonationLevel=impersonate}//./root/cimv2');
+        $portQuery = $wmi->ExecQuery("SELECT * FROM Win32_TCPIPPrinterPort WHERE HostAddress = '$portName'");
+
+        foreach ($portQuery as $port) {
+            return $port->HostAddress;
+        }
+
+        return 'No disponible';
+    }
+
     public function getCash(){
         $select = "SELECT * FROM T_TER";
         $exec = $this->con->prepare($select);
@@ -60,12 +100,14 @@ class ReportController extends Controller{
         $exec = $this->con->prepare($selpagtar);
         $exec->execute();
         $fpas = $exec->fetchall(\PDO::FETCH_ASSOC);
+        $impresoras = $this->getPrinter();
 
         $res = [
-            "terminales"=>$terminales,
-            "formaspagos"=>$fpas
+            "terminales"=>mb_convert_encoding($terminales,'UTF-8'),
+            "formaspagos"=>mb_convert_encoding($fpas,'UTF-8'),
+            "impresoras"=>$impresoras
         ];
-        return response()->json( mb_convert_encoding($res,'UTF-8'),200);
+        return response()->json($res,200);
     }
 
     public function getSales(){
