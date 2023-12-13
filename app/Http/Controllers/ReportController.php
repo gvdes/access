@@ -74,6 +74,7 @@ class ReportController extends Controller{
         COB.TICKET,
         F_FAC.CNOFAC AS CLIENTE,
         Format(F_FAC.FECFAC, 'Short Date') as FECHA,
+        Format(F_FAC.HORFAC, 'HH:MM:SS') AS HORA,
         COB.EFECTIVO,
         COB.TARJETAS,
         COB.TRANSFERENCIAS,
