@@ -624,6 +624,7 @@ class TicketController extends Controller{
                                 "impresora"=>$print
                             ];
                            $print = $this->printck($header);
+                           $print = $this->printck($header);
                            if($print){
                             $res = [
                                 "mssg"=>"Devolucion :".$header['ticket'],
