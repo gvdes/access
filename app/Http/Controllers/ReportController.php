@@ -222,4 +222,52 @@ class ReportController extends Controller{
 
     }
 
+    public function filter(Request $request){
+            $fechas = $request->all();
+            // return $fechas;
+            if(isset($fechas['filt']['from'])){
+                $desde = $fechas['filt']['from'];
+                $hasta = $fechas['filt']['to'];
+                $condicion = "#".$desde."#"." AND "."#".$hasta."#";
+            }else{
+                $date = $fechas['filt'];
+                $condicion = "#".$date."#"." AND "."#".$date."#";
+            }
+            $selpagtar = "SELECT
+            COB.TERMINAL,
+            COB.TICKET,
+            F_FAC.CNOFAC AS CLIENTE,
+            Format(F_FAC.FECFAC, 'Short Date') as FECHA,
+            Format(F_FAC.HORFAC, 'HH:MM:SS') AS HORA,
+            COB.EFECTIVO,
+            COB.TARJETAS,
+            COB.TRANSFERENCIAS,
+            COB.CREDITOS,
+            COB.VALES
+            FROM F_FAC
+            INNER JOIN (
+            SELECT
+            T_TER.DESTER AS TERMINAL,
+            F_LCO.TFALCO&'-'&F_LCO.CFALCO AS TICKET,
+            F_LCO.FECLCO AS FECHA,
+            MAX(IIF(F_LCO.FPALCO = 'EFE','OK' ,'')) AS EFECTIVO,
+            MAX(IIF((F_LCO.FPALCO = 'TBA' OR  F_LCO.FPALCO = 'TSC' OR F_LCO.FPALCO = 'TSA'),F_LCO.IMPLCO ,'')) AS TARJETAS,
+            MAX(IIF((F_LCO.FPALCO = 'TDB' OR  F_LCO.FPALCO = 'TDA' OR F_LCO.FPALCO = 'TDS'), F_LCO.IMPLCO,'')) AS TRANSFERENCIAS,
+            MAX(IIF(F_LCO.FPALCO = 'C30', F_LCO.IMPLCO,'')) AS CREDITOS,
+            MAX(IIF(F_LCO.FPALCO = '[V]', F_LCO.IMPLCO,'')) AS VALES
+            FROM F_LCO
+            INNER JOIN T_TER ON T_TER.CODTER = F_LCO.TERLCO
+            WHERE FECLCO BETWEEN ".$condicion."
+            GROUP BY
+            T_TER.DESTER,
+            TFALCO&'-'&CFALCO,
+            FECLCO ) AS COB  ON COB.TICKET = F_FAC.TIPFAC&'-'&F_FAC.CODFAC";
+            $exec = $this->con->prepare($selpagtar);
+            $exec->execute();
+            $fpas = $exec->fetchall(\PDO::FETCH_ASSOC);
+            $res = [
+                "formaspagos"=>mb_convert_encoding($fpas,'UTF-8'),
+            ];
+            return response()->json($res,200);
+    }
 }
