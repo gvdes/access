@@ -427,6 +427,7 @@ class TicketController extends Controller{
                     "impresora"=>$print
                 ];
                 $print = $this->printck($header);
+                $print = $this->printck($header);
                 if($print){
                  $res = [
                      "mssg"=>"Ticket :".$header['ticket'],
@@ -623,7 +624,6 @@ class TicketController extends Controller{
                                 "desfpa"=>$fpas[0],
                                 "impresora"=>$print
                             ];
-                           $print = $this->printck($header);
                            $print = $this->printck($header);
                            if($print){
                             $res = [
