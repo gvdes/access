@@ -189,7 +189,7 @@ class TicketController extends Controller{
         $tipo = $request->type;
         $ticket = $request->serie."-".$request->folio;
         $ala = $this->devolucion($ticket,$request->serie,$request->mot,$request->create,$request->folio,$request->print);
-        $this->devolucion($ticket,$request->serie,$request->mot,$request->create,$request->folio,$request->print);
+        // $this->devolucion($ticket,$request->serie,$request->mot,$request->create,$request->folio,$request->print);
         return $ala;
     }
 
@@ -836,6 +836,129 @@ class TicketController extends Controller{
                 return true;
             }
                 return false;
+    }
+
+    public function retirada(Request $request){
+        $date = date("Y/m/d H:i");//horario para la hora
+        $horad = explode(" ", $date)[1];
+        $fecha =  date("d/m/Y");
+        $serie = $request->serdev;
+        $valor  = $request->retiro;
+        $nota = "Devolucion por el ".$request->nota;
+        $proveedor = 833;
+
+
+        $maxcocret = "SELECT MAX(CODRET) AS CODIGO FROM F_RET";
+        $exec = $this->con->prepare($maxcocret);
+        $exec->execute();
+        $max = $exec->fetch(\PDO::FETCH_ASSOC);
+        $codigo = $max['CODIGO'] + 1;
+
+        $terminal = "SELECT T_TER.CODTER AS CODTER  FROM T_TER INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.DOCTER WHERE T_DOC.TIPDOC = $serie";
+        $exec = $this->con->prepare($terminal);
+        $exec->execute();
+        $codter = $exec->fetch(\PDO::FETCH_ASSOC);
+        $term = $codter['CODTER'];
+        $idterminal = str_pad($codter['CODTER'], 4, "0", STR_PAD_LEFT)."00".date('ymd');
+
+        $ins = [
+            $codigo,
+            $proveedor,
+            $idterminal,
+            $term,
+            $fecha,
+            $horad,
+            $nota,
+            $valor,
+            0,
+            0
+        ];
+
+        $valin = "INSERT INTO F_RET VALUES (?,?,?,?,?,?,?,?,?,?)";
+        $exec = $this->con->prepare($valin);
+        $exec->execute($ins);
+        if($exec){
+            $header = [
+                "print"=>$request->print,
+                "proveedor"=>$proveedor,
+                "retirada"=>$codigo,
+                "terminal"=>$term,
+                "fecha"=>$fecha,
+                "hora"=>$horad,
+                "dependiente"=>$request->by,
+                "valor"=>$valor,
+                "notas"=>$nota
+            ];
+            $retirada = $this->printret($header);
+            if($retirada){
+                $res = ["mssg"=>"Retirada ".$codigo."realizada"];
+                return $res;
+            }else{
+                $res = ["mssg"=>"No se imprimio la retirada"];
+                return $res;
+            }
+
+        }else{
+            return "No se pudo generar la retirada";
+        }
+    }
+
+    public function printret($header){
+        $documento = env('DOCUMENTO');
+        $printers = $header['print'];
+
+        $pro = "SELECT * FROM F_PRO WHERE CODPRO =". $header['proveedor'];
+        $exec = $this->con->prepare($pro);
+        $exec->execute();
+        $proveedor = $exec->fetch(\PDO::FETCH_ASSOC);//OK
+
+        $sql = "SELECT CTT1TPV, CTT2TPV, CTT3TPV, CTT4TPV, CTT5TPV, PTT1TPV, PTT2TPV, PTT3TPV, PTT4TPV, PTT5TPV, PTT6TPV, PTT7TPV, PTT8TPV FROM T_TPV WHERE CODTPV = $documento";
+        $exec = $this->con->prepare($sql);
+        $exec->execute();
+        $text = $exec->fetch(\PDO::FETCH_ASSOC);//OK
+
+        try{
+            $connector = new NetworkPrintConnector($printers, 9100, 3);
+            $printer = new Printer($connector);
+        }catch(\Exception $e){ return null;}
+        try {
+            try{
+                $printer->setJustification(printer::JUSTIFY_LEFT);
+                $printer->text(" \n");
+                $printer->text(" \n");
+                $printer->text("------------------------------------------------\n");
+                $printer->text(" \n");
+                $printer->text($text["CTT1TPV"]."\n");
+                $printer->text($text["CTT3TPV"]." \n");
+                $printer->text($text["CTT5TPV"]." \n");
+                $printer->text(" \n");
+                $printer->text(" \n");
+                $printer->text("------------------------------------------------\n");
+                $printer->text("SALIDA DE TERMINAL".$header['terminal']." \n");
+                $printer->text("N° ".$header['retirada']." Fecha: ".$header["fecha"]." ".$header["hora"] ." \n");
+                $printer->text("Le atendio :".$header["dependiente"]." \n");
+                $printer->text("------------------------------------------------\n");
+                $printer->text($proveedor['NOFPRO']." \n");
+                $printer->text(" \n");
+                $printer->text(" \n");
+                $printer->text("00000"." \n");
+                $printer->text(" \n");
+                $printer->text("GVC"." \n");
+                $printer->text("------------------------------------------------\n");
+                $printer->text(str_pad("IMPORTE RETIRADO: ",14));
+                $printer->text(number_format($header['valor'],2)." \n");
+                $printer->text("Concepto:"." \n");
+                $printer->text($header['notas']." \n");
+                $printer -> cut();
+                $printer -> close();
+            }catch(Exception $e){}
+
+        } finally {
+            $printer -> close();
+            return true;
+        }
+            return false;
+
     }
 
 }

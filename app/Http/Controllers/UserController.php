@@ -176,12 +176,8 @@ class UserController extends Controller{
         if($req){
             foreach($req as $requi){
                 $nick = $requi['nick'];
-                $existnick = DB::table('accounts')->where('nick',$nick)->first();
-                if($existnick){
-                    $false['nick'][] = "El nick ".$nick." ya existe";
-                }else{
                     $name = trim($requi['complete_name']);
-                    $space = substr_count($name, ' ');
+
                     if($space === 2){
                         $nom = explode(" ",$name);
                         $names = $nom[0];
@@ -224,7 +220,7 @@ class UserController extends Controller{
                     }else{
                         $false['_wp_workpoint'][] = "El id de la sucursal ".$wp." no existe en el usuario ".$nick;
                     }
-                }
+
             }
             $res = [
                 'goals'=>$goals,
