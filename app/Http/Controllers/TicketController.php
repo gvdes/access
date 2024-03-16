@@ -773,7 +773,7 @@ class TicketController extends Controller{
                     $printer->text($header['terminal']." \n");
                     $printer->text("N° ".$header['ticket']." Fecha: ".$header["fecha"]." ".$header["hora"] ." \n");
                     $printer->text("Forma de Pago: ".mb_convert_encoding($header["desfpa"]['CPTLCO'],'UTF-8')." \n");
-                    $printer->text($header["nomcli"]." \n");
+                    $printer->text(mb_convert_encoding($header["nomcli"],'UTF-8')." \n");
                     $printer->text($header["direccion"]." \n");
                     $printer->text($header["nose"]." \n");
                     $printer->text("_______________________________________________ \n");
@@ -782,7 +782,7 @@ class TicketController extends Controller{
                     $printer -> setFont(Printer::FONT_B);
                     foreach($header['products'] as $product){
                         $printer->setJustification(printer::JUSTIFY_LEFT);
-                               $printer->text($product['ARTLFA']."   ".$product['DESLFA']." \n");
+                        $printer->text($product['ARTLFA']."   ".mb_convert_encoding($product['DESLFA'], 'UTF-8')." \n");
                                $printer->setJustification(printer::JUSTIFY_RIGHT);
                                $quantity = str_pad(number_format($product['CANLFA'],2,'.',''),15);
                                $arti [] = $product['CANLFA'];
