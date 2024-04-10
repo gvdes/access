@@ -17,7 +17,7 @@ class RequiredController extends Controller
       try{  $this->conn  = new \PDO("odbc:DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};charset=UTF-8; DBQ=".$access."; Uid=; Pwd=;");
           }catch(\PDOException $e){ die($e->getMessage()); }
       }else{ die("$access no es un origen de datos valido."); }
-    } 
+    }
 
     public function invoice_received(Request $request){ //metodo para crear la salida a la sucursal
         try{
@@ -40,7 +40,7 @@ class RequiredController extends Controller
                         $exec -> execute();
                         $maxcode=$exec->fetch(\PDO::FETCH_ASSOC);//averS
                         $codfac = intval($maxcode["CODIGO"])+ 1;//se obtiene el nuevo numero de factura que se inserara
-                        $product = $this->productreceived($id,$rol,$codfac);//se envian datos id de la requisision, tipo de factura(serie) y codigo de factura a insertar hacia el metodo 
+                        $product = $this->productreceived($id,$rol,$codfac);//se envian datos id de la requisision, tipo de factura(serie) y codigo de factura a insertar hacia el metodo
                             $fac = [//se crea el arrego para insertar en factusol
                                 $rol,//tipo(serie) de factura
                                 $codfac,//codigo de factura
@@ -57,7 +57,7 @@ class RequiredController extends Controller
                                 $product,
                                 $product,
                                 $product,
-                                "02-01-00",                           
+                                "02-01-00",
                                 "02-01-00",
                                 27,
                                 27,
@@ -101,9 +101,9 @@ class RequiredController extends Controller
                             $response = curl_exec($curl);//respuesta
                             $err = curl_error($curl);         //errror
                             curl_close($curl);//se cierra curl
-                         }//si hay diferencia se envia un mensaje con la cantidad de difeerencia                                    
+                         }//si hay diferencia se envia un mensaje con la cantidad de difeerencia
 
-                        return response()->json([                            
+                        return response()->json([
                         "folio"=>$folio,
                         "art_contados"=>$count,
                         "can_contada"=>$sum],201);//se retorna el folio de la factura
@@ -113,7 +113,7 @@ class RequiredController extends Controller
         }catch (\PDOException $e){ die($e->getMessage());}
     }
     public function productreceived($id,$rol,$codfac){//metoro de insercion de productos en factusol
-        
+
         $product_require = DB::table('product_required AS PR')//se crea el query para obteener los productos de la requisision
             ->join('products AS P','P.id','=','PR._product')
             ->leftjoin('prices_product AS PP','PP._product','=','P.id')
@@ -127,7 +127,15 @@ class RequiredController extends Controller
         $ttotal=0;//inicio contador de total
         foreach($product_require as $pro){//inicio de cliclo para obtener productos
             $precio = $pro->precio;//se optiene el precio de cada producto
-            if($pro->medida == 1){$canti = $pro->cantidad ;}elseif($pro->medida == 2){$canti = $pro->cantidad * 12; }elseif($pro->medida == 3){$canti = $pro->cantidad * $pro->PXC ;}elseif($pro->medida == 4){$canti = ($pro->cantidad * ($pro->PXC / 2)) ;}//SE VALIDA LA UNIDAD DE MECIDA DE SURTIDO
+            if($pro->medida == 1){
+                $canti = $pro->cantidad ;
+            }elseif($pro->medida == 2){
+                $canti = $pro->cantidad * 12;
+            }elseif($pro->medida == 3){
+                $canti = $pro->cantidad * $pro->PXC ;
+            }elseif($pro->medida == 4){
+                $canti = ($pro->cantidad * ($pro->PXC / 2)) ;
+            }//SE VALIDA LA UNIDAD DE MECIDA DE SURTIDO
             $cantidad = $pro->cantidad;//se obtine la cantidad de cada producto
             $total = $precio * $canti ;//se obtiene el total de la linea
             $ttotal = $ttotal + $total ;//se obtiene el total de la requisision
@@ -139,7 +147,7 @@ class RequiredController extends Controller
                 $pro->descripcion,//descripcion de el articulo
                 $canti,//cantidad contada
                 $pro->precio,//precio de el articulo
-                $total//total de la linea            
+                $total//total de la linea
             ];
             $insert = "INSERT INTO F_LFR (TIPLFR,CODLFR,POSLFR,ARTLFR,DESLFR,CANLFR,PRELFR,TOTLFR) VALUES (?,?,?,?,?,?,?,?)";//query para insertar las lineas de la factura creada en factusol
             $exec = $this->conn->prepare($insert);
@@ -147,10 +155,10 @@ class RequiredController extends Controller
 
             $updatestock = "UPDATE F_STO SET ACTSTO = ACTSTO + ? , DISSTO = DISSTO + ?  WHERE  ARTSTO = ? AND ALMSTO = ?";//query para actualizar los stock de el almacen recordemos que solo es general
             $exec = $this->conn->prepare($updatestock);
-            $exec -> execute([$pro->cantidad,$pro->cantidad,$pro->codigo, "GEN"]);
+            $exec -> execute([$canti,$canti,$pro->codigo, "GEN"]);
 
             $pos++;//contador
-        }  
+        }
         return $ttotal;//se retorna el total para el uso en el encabezado de la factura
 
     }

@@ -19,11 +19,11 @@ class ReceivedController extends Controller
       try{  $this->conn  = new \PDO("odbc:DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};charset=UTF-8; DBQ=".$access."; Uid=; Pwd=;");
           }catch(\PDOException $e){ die($e->getMessage()); }
       }else{ die("$access no es un origen de datos valido."); }
-    } 
+    }
 
     public function invoice(Request $request){ //metodo para crear la salida a la sucursal
         try{
-            $id = $request->id;//se recibe por metodo post el id de la requisicion           
+            $id = $request->id;//se recibe por metodo post el id de la requisicion
             $date = date("Y/m/d H:i");//se gerera la fecha de el dia de hoy con  formato de fecha y hora
             $date_format = Carbon::now()->format('d/m/Y');
             // $date_format = date("d/m/Y");//se formatea la fecha de el dia con el formato solo de fecha
@@ -58,8 +58,8 @@ class ReceivedController extends Controller
                         $maxcode=$exec->fetch(\PDO::FETCH_ASSOC);//averS
                             $codfac = intval($maxcode["CODIGO"])+ 1;//se obtiene el nuevo numero de factura que se inserara
 
-                        $prouduct = $this->productrequired($id,$rol,$codfac);//se envian datos id de la requisision, tipo de factura(serie) y codigo de factura a insertar hacia el metodo 
-            
+                        $prouduct = $this->productrequired($id,$rol,$codfac);//se envian datos id de la requisision, tipo de factura(serie) y codigo de factura a insertar hacia el metodo
+
                             $fac = [//se crea el arrego para insertar en factusol
                                 $rol,//tipo(serie) de factura
                                 $codfac,//codigo de factura
@@ -78,9 +78,9 @@ class ReceivedController extends Controller
                                 $prouduct,//el metodo productrequired me devuelve el total o sea que este es el total de la factura compas xd
                                 $prouduct,//el metodo productrequired me devuelve el total o sea que este es el total de la factura compas xd
                                 "C30",//la forma de pago siempre esta en credito 30 dias
-                                $not,//observaciones 
+                                $not,//observaciones
                                 $date_format,//fecha actual en formato
-                                $hour,//hora      
+                                $hour,//hora
                                 27,//quien hizo la factura en este caso vizapp
                                 27,//quien modifico simpre sera el mismo cuando se insertan
                                 1,//iva2
@@ -111,7 +111,7 @@ class ReceivedController extends Controller
                         //   CURLOPT_HTTPHEADER => array(
                         //     "content-type: application/x-www-form-urlencoded"),));
                         // $response = curl_exec($curl);
-                        // $err = curl_error($curl);         
+                        // $err = curl_error($curl);
                         // curl_close($curl);
                         return response()->json([
                             "folio"=>$folio,
@@ -123,7 +123,7 @@ class ReceivedController extends Controller
         }catch (\PDOException $e){ die($e->getMessage());}
     }
     public function productrequired($id,$rol,$codfac){//metoro de insercion de productos en factusol
-        
+
         $product_require = DB::table('product_required AS PR')//se crea el query para obteener los productos de la requisision
             ->join('products AS P','P.id','=','PR._product')
             ->leftjoin('prices_product AS PP','PP._product','=','P.id')
@@ -135,9 +135,9 @@ class ReceivedController extends Controller
 
         $pos= 1;//inicio contador de posision
         $ttotal=0;//inicio contador de total
-       
+
         foreach($product_require as $pro){//inicio de cliclo para obtener productos
-            $precio = $pro->precio;//se optiene el precio de cada producto  
+            $precio = $pro->precio;//se optiene el precio de cada producto
             $bull = null;
             if($pro->medida == 1){$canti = $pro->cantidad ;}elseif($pro->medida == 2){$canti = $pro->cantidad * 12; }elseif($pro->medida == 3){$canti = $pro->cantidad * $pro->PXC ; $bull = $pro->cantidad; }elseif($pro->medida == 4){$canti = ($pro->cantidad * ($pro->PXC / 2)) ;}//se valida la unidad de medida de el surtio
             // $bul = $bull > 0 ? $bull : null;
@@ -161,9 +161,9 @@ class ReceivedController extends Controller
 
             $updatestock = "UPDATE F_STO SET ACTSTO = ACTSTO - ? , DISSTO = DISSTO - ?  WHERE  ARTSTO = ? AND ALMSTO = ?";//query para actualizar los stock de el almacen recordemos que solo es general
             $exec = $this->conn->prepare($updatestock);
-            $exec -> execute([$pro->cantidad,$pro->cantidad,$pro->codigo, "GEN"]);
+            $exec -> execute([$canti,$canti,$pro->codigo, "GEN"]);
             $pos++;//contador
-        }  
+        }
 
         return $ttotal;//se retorna el total para el uso en el encabezado de la factura
 
