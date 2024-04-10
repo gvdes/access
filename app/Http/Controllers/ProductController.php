@@ -370,7 +370,7 @@ class ProductController extends Controller{
                 return ["GEN" => "GEN", "EXH" => "EXH", "DES" => "DES", "FDT" => "FDT"];
             case 22: //BR3
                 return ["GEN" => "GEN", "EXH" => "EXH", "DES" => "DES", "FDT" => "FDT"];
-                case 22: //CRG
+                case 23: //CRG
                     return ["GEN" => "GEN", "EXH" => "EXH", "DES" => "DES", "FDT" => "FDT"];
         }
     }
