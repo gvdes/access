@@ -308,6 +308,7 @@ class ClientOrderController extends Controller{
         $fpa = $request->modes;//formas de pago
         $iva = $request->iva;//iva
         $create = $request->by;
+        $printer = $request->impresora;
         $efectivo = $fpa['EFE'];//valor de efectivo
         $fpaid = $fpa['DIG']['id'];//id de pago en caso de ser digital
         $fpaval = $fpa['DIG']['val'];//valor de pago en caso de ser digital
@@ -574,7 +575,7 @@ class ClientOrderController extends Controller{
                 $updatestock = "UPDATE F_STO SET ACTSTO = ACTSTO - 1, DISSTO = DISSTO - 1 WHERE ARTSTO = 'IVA' AND ALMSTO = 'GEN'";
                 $exec = $this->con->prepare($updatestock);
                 $exec->execute();
-                $impresion = $this->printticket($header);
+                $impresion = $this->printticket($header,$printer);
                 if($impresion == null){
                     $impresion = false;
                 }else{
@@ -597,10 +598,10 @@ class ClientOrderController extends Controller{
         }
     }
 
-    public function printticket($header){
+    public function printticket($header,$printer){
         $documento = env('DOCUMENTO');
         $imagen = env('IMAGENLOCAL');
-        $printers = env('IPCAJA');
+        $printers = $printer;
         $sql = "SELECT CTT1TPV, CTT2TPV, CTT3TPV, CTT4TPV, CTT5TPV, PTT1TPV, PTT2TPV, PTT3TPV, PTT4TPV, PTT5TPV, PTT6TPV, PTT7TPV, PTT8TPV FROM T_TPV WHERE CODTPV = $documento";
         $exec = $this->con->prepare($sql);
         $exec->execute();
@@ -614,7 +615,9 @@ class ClientOrderController extends Controller{
                 try{
                     if(file_exists($imagen)){
                     $logo = EscposImage::load($imagen, false);
-                    $printer->bitImage($logo);
+                    // $printer->setJustification(Printer::JUSTIFY_CENTER);
+                    $printer->bitImage($logo,0);
+                    $printer->feed();
                     }
                     $printer->text(" \n");
                     $printer->text(" \n");

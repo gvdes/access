@@ -101,12 +101,12 @@ class ReportController extends Controller{
         $exec = $this->con->prepare($selpagtar);
         $exec->execute();
         $fpas = $exec->fetchall(\PDO::FETCH_ASSOC);
-        $impresoras = $this->getPrinter();
+        // $impresoras = $this->getPrinter();
 
         $res = [
             "terminales"=>mb_convert_encoding($terminales,'UTF-8'),
             "formaspagos"=>mb_convert_encoding($fpas,'UTF-8'),
-            "impresoras"=>$impresoras
+            // "impresoras"=>$impresoras
         ];
         return response()->json($res,200);
     }

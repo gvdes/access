@@ -72,7 +72,8 @@ class TicketController extends Controller{
         $ticket = $request->serie."-".$request->folio;
         if($tipo == "Devolucion"){
             $ala = $this->devolucion($ticket,$request->serie,$request->mot,$request->create,$request->folio,$request->print);
-            return response()->json($ala,200);
+            $status = $ala->original['err'] == false ? 200 : 401;
+            return response()->json($ala,$status);
         }else if($tipo == "Reimpresion"){
             $existck = "SELECT * FROM F_FAC WHERE TIPFAC&'-'&CODFAC = "."'".$ticket."'";
             $exec = $this->con->prepare($existck);
@@ -467,7 +468,8 @@ class TicketController extends Controller{
                         "fecha"=>$ivpag['fecha'],
                         "ticket"=>$ivpag['ticket'],
                         "total"=>doubleval($ivpag['total']),
-                    ]
+                    ],
+                    "err"=>true
                 ];
                 return response()->json($res,401);
             }else{
@@ -628,6 +630,7 @@ class TicketController extends Controller{
                            if($print){
                             $res = [
                                 "mssg"=>"Devolucion :".$header['ticket'],
+                                "err"=>false
                             ];
                         }else{
                             $res = [
@@ -742,7 +745,7 @@ class TicketController extends Controller{
         $imagen = env('IMAGENLOCAL');
         $documento = env('DOCUMENTO');
         $printers = $header['impresora'];
-        // $printers = "192.168.10.224";
+        // $printers = "192.168.10.100";
         $sql = "SELECT CTT1TPV, CTT2TPV, CTT3TPV, CTT4TPV, CTT5TPV, PTT1TPV, PTT2TPV, PTT3TPV, PTT4TPV, PTT5TPV, PTT6TPV, PTT7TPV, PTT8TPV FROM T_TPV WHERE CODTPV = $documento";
         $exec = $this->con->prepare($sql);
         $exec->execute();
