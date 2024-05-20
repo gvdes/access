@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 use Mike42\Escpos\Printer;
 use Illuminate\Support\Facades\DB;
+use Mike42\Escpos\EscposImage;
 
 class TicketController extends Controller{
     /**
@@ -757,10 +758,12 @@ class TicketController extends Controller{
 
             try {
                 try{
-                    // if(file_exists($imagen)){
-                    // $logo = EscposImage::load($imagen);
-                    // $printer->bitImageColumnFormat($logo);
-                    // }
+                    if(file_exists($imagen)){
+                        $logo = EscposImage::load($imagen, false);
+                        $printer->setJustification(Printer::JUSTIFY_CENTER);
+                        $printer->bitImage($logo,0);
+                        $printer->feed();
+                    }
                     $printer->setJustification(printer::JUSTIFY_LEFT);
                     $printer->text(" \n");
                     $printer->text(" \n");
