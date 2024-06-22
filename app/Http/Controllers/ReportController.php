@@ -133,8 +133,8 @@ class ReportController extends Controller{
 
         $ant = $concat.($year-1) .".accdb";
 
-        $select = "SELECT SUM(TOTFAC) as TOTAL FROM F_FAC WHERE month(FECFAC) = $month AND day(FECFAC) <= $day";
-        $tickets = "SELECT COUNT(*) as TICKETS FROM F_FAC WHERE month(FECFAC) = $month AND day(FECFAC) <= $day";
+        $select = "SELECT SUM(TOTFAC) as TOTAL FROM F_FAC WHERE month(FECFAC) = $month ";
+        $tickets = "SELECT COUNT(*) as TICKETS FROM F_FAC WHERE month(FECFAC) = $month ";
 
         if(file_exists($ant)){
             try{
