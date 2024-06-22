@@ -307,6 +307,7 @@ class ClientOrderController extends Controller{
         $ticket = $request->ticket;//recibo ticket completo
         $fpa = $request->modes;//formas de pago
         $iva = $request->iva;//iva
+        $monto = $request->monto;
         $create = $request->by;
         $printer = $request->impresora;
         $efectivo = $fpa['EFE'];//valor de efectivo
@@ -363,7 +364,7 @@ class ClientOrderController extends Controller{
                 $exec->execute();
                 $max = $exec->fetch(\PDO::FETCH_ASSOC);
                 $codigo = $max['maxi'] + 1;
-                $total = $fil['TOTFAC'] * $iva;
+                $total = $monto * $iva;
 
                 $contador = 1;
 
