@@ -912,4 +912,65 @@ class ProductController extends Controller{
     public function insartstore(Request $request){
 
     }
+
+    public function replydio(request $request){
+        $date = $request->date;
+
+        $products = "SELECT F_ART.* FROM ((F_ART  INNER JOIN F_LFA ON F_LFA.ARTLFA = F_ART.CODART) INNER JOIN F_FAC ON F_FAC.TIPFAC = F_LFA.TIPLFA AND F_FAC.CODFAC = F_LFA.CODLFA) WHERE F_FAC.CLIFAC = 37  AND  F_FAC.FECFAC >= #".$date."#";
+        $exec = $this->con->prepare($products);
+        $exec -> execute();
+        $articulos=$exec->fetchall(\PDO::FETCH_ASSOC);
+        if($articulos){
+        $dat =$this->replypricesdio($date);
+
+        $colsTabProds = array_keys($articulos[0]);
+
+        foreach($articulos as $art){
+            foreach($colsTabProds as $col){ $art[$col] = utf8_encode($art[$col]); }
+
+
+
+            $url ="192.168.140.254:1619/access/public/product/insertpub";
+            $ch = curl_init($url);
+            $data = json_encode(["products" => $art]);
+            curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+            $ex = curl_exec($ch);
+            curl_close($ch);
+
+
+        }
+            return response()->json(["products" => $ex,
+                                    "prices" => $dat
+        ]);
+        }
+        else{return response()->json("no hay articulos que exportar");}
+    }
+
+    public function replypricesdio($date){
+        $prices = "SELECT F_LTA.* FROM ((F_LTA  INNER JOIN F_LFA ON F_LFA.ARTLFA = F_LTA.ARTLTA) INNER JOIN F_FAC ON F_FAC.TIPFAC = F_LFA.TIPLFA AND F_FAC.CODFAC = F_LFA.CODLFA) WHERE F_FAC.CLIFAC = 37 AND F_LTA.TARLTA NOT IN (7) AND  F_FAC.FECFAC >= #".$date."#";
+        $exec = $this->con->prepare($prices);
+        $exec -> execute();
+        $precios=$exec->fetchall(\PDO::FETCH_ASSOC);
+        foreach($precios as $pre){
+
+            $url ="192.168.140.254:1619/access/public/product/insertpricespub";
+            $ch = curl_init($url);
+            $data = json_encode(["prices" => $pre]);
+            curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+            $ex = curl_exec($ch);
+            curl_close($ch);
+
+        }
+        return response()->json($ex);
+    }
 }
