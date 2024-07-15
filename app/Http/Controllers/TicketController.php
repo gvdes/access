@@ -76,7 +76,7 @@ class TicketController extends Controller{
             $status = $ala->original['err'] == false ? 200 : 401;
             return response()->json($ala,$status);
         }else if($tipo == "Reimpresion"){
-            $existck = "SELECT * FROM F_FAC WHERE TIPFAC&'-'&CODFAC = ".$ticket."'";
+            $existck = "SELECT * FROM F_FAC WHERE TIPFAC&'-'&CODFAC = "."'".$ticket."'";
             $exec = $this->con->prepare($existck);
             $exec->execute();
             $tck = $exec->fetch(\PDO::FETCH_ASSOC);
