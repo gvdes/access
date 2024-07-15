@@ -76,7 +76,7 @@ class TicketController extends Controller{
             $status = $ala->original['err'] == false ? 200 : 401;
             return response()->json($ala,$status);
         }else if($tipo == "Reimpresion"){
-            $existck = "SELECT * FROM F_FAC WHERE TIPFAC&'-'&CODFAC = "."'".$ticket."'";
+            $existck = "SELECT * FROM F_FAC WHERE TIPFAC&'-'&CODFAC = ".$ticket."'";
             $exec = $this->con->prepare($existck);
             $exec->execute();
             $tck = $exec->fetch(\PDO::FETCH_ASSOC);
@@ -253,8 +253,8 @@ class TicketController extends Controller{
         }
 
         if(count($fpas) != 1){
-            $fpa2 = $fpas[0]['IMPORTE'];
-            $fpa1 = $fpas[1]['IMPORTE'];
+            $fpa1 = $fpas[0]['IMPORTE'];
+            $fpa2 = $fpas[1]['IMPORTE'];
         }else{
             $fpa1 = $fpas[0]['IMPORTE'];
             $fpa2 = 0;
@@ -337,7 +337,7 @@ class TicketController extends Controller{
                 2,
                 intval($codter['CODTER']),
                 intval($devolucion['DEPFAC']),
-                $efe,
+                $fpas[0]['FPALCO'] == 'EFE' ? $fpa1 + $cambio : $fpa1,
                 $cambio,
                 $fpa2 ,
                 $devolucion['TIPFAC'],
@@ -780,7 +780,8 @@ class TicketController extends Controller{
                     $printer->text("N° ".$header['ticket']." Fecha: ".$header["fecha"]." ".$header["hora"] ." \n");
                     $printer->text("Forma de Pago: ".mb_convert_encoding($header["desfpa"]['CPTLCO'],'UTF-8')." \n");
                     $printer->text(mb_convert_encoding($header["nomcli"],'UTF-8')." \n");
-                    $printer->text($header["direccion"]." \n");
+                    $printer->text(mb_convert_encoding($header["direccion"],'UTF-8')." \n");
+                    $printer->text(mb_convert_encoding($header["nose"],'UTF-8')." \n");
                     $printer->text($header["nose"]." \n");
                     $printer->text("_______________________________________________ \n");
                     $printer->text("ARTICULO        UD.        PRECIO        TOTAL \n");
@@ -811,7 +812,8 @@ class TicketController extends Controller{
                         // $padding = 54 - strlen($despa);
                         $printer->text(mb_convert_encoding($despa,'UTF-8'));
                         $printer->text(str_pad('',7,' '));
-                        $printer->text(str_pad("$".number_format($pago['IMPORTE'],2),-13)." \n");
+                        $numbe = $pago['FPALCO'] == 'EFE' ? $pago['IMPORTE'] + $header['cambio']  : $pago['IMPORTE'];
+                        $printer->text(str_pad("$".number_format($numbe,2),-13)." \n");
                     }
                     if($header['cambio'] <> 0){
                         $printer->text(str_pad("Cambio: ",14));
@@ -880,7 +882,7 @@ class TicketController extends Controller{
             0
         ];
 
-        $valin = "INSERT INTO F_RET VALUES (?,?,?,?,?,?,?,?,?,?)";
+        $valin = "INSERT INTO F_RET (CODRET, PRORET, TPVIDRET, CAJRET, FECRET, HORRET, CONRET, IMPRET, CFARET, PFARET)  VALUES (?,?,?,?,?,?,?,?,?,?)";
         $exec = $this->con->prepare($valin);
         $exec->execute($ins);
         if($exec){
