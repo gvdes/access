@@ -675,7 +675,7 @@ class ProductController extends Controller{
     public function insertpricespub(request $request){
 
 
-        if($request->prices["TARLTA"] > 1){
+        // if($request->prices["TARLTA"] > 1){
             $updprices =   round($request->prices["PRELTA"]);
             $upd = "UPDATE F_LTA SET PRELTA = $updprices WHERE ARTLTA = ? AND TARLTA = ?";
             $exec = $this->con->prepare($upd);
@@ -683,31 +683,31 @@ class ProductController extends Controller{
 
         $insert = "INSERT INTO  F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
         $exec = $this->con->prepare($insert);
-        $exec -> execute([$request->prices["TARLTA"],$request->prices["ARTLTA"],0,round($request->prices["PRELTA"])]);}
+        $exec -> execute([$request->prices["TARLTA"],$request->prices["ARTLTA"],0,round($request->prices["PRELTA"])]);
 
-        if($request->prices["TARLTA"] == 2){
-            $pricesnew =   round($request->prices["PRELTA"]);
+        // if($request->prices["TARLTA"] == 2){
+        //     $pricesnew =   round($request->prices["PRELTA"]);
 
-            if(($pricesnew >= 0) && ($pricesnew <= 50)){
-                $prai = $pricesnew + 5;
-            }elseif(($pricesnew >= 51) && ($pricesnew <= 100)){
-                $prai = $pricesnew + 10;
-            }elseif(($pricesnew >= 101) && ($pricesnew <= 500)){
-                $prai = $pricesnew + 20;
-            }elseif(($pricesnew >= 501) && ($pricesnew <= 1000)){
-                $prai = $pricesnew + 50;
-            }elseif($pricesnew >= 1001){
-                $prai =  $pricesnew + 100;
-            }
+        //     if(($pricesnew >= 0) && ($pricesnew <= 50)){
+        //         $prai = $pricesnew + 5;
+        //     }elseif(($pricesnew >= 51) && ($pricesnew <= 100)){
+        //         $prai = $pricesnew + 10;
+        //     }elseif(($pricesnew >= 101) && ($pricesnew <= 500)){
+        //         $prai = $pricesnew + 20;
+        //     }elseif(($pricesnew >= 501) && ($pricesnew <= 1000)){
+        //         $prai = $pricesnew + 50;
+        //     }elseif($pricesnew >= 1001){
+        //         $prai =  $pricesnew + 100;
+        //     }
 
-            $upda = "UPDATE F_LTA SET PRELTA = $prai WHERE ARTLTA = ? AND TARLTA = 1";
-            $exec = $this->con->prepare($upda);
-            $exec -> execute([$request->prices["ARTLTA"]]);
+        //     $upda = "UPDATE F_LTA SET PRELTA = $prai WHERE ARTLTA = ? AND TARLTA = 1";
+        //     $exec = $this->con->prepare($upda);
+        //     $exec -> execute([$request->prices["ARTLTA"]]);
 
-            $inserta = "INSERT INTO  F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
-            $exec = $this->con->prepare($inserta);
-            $exec -> execute([1,$request->prices["ARTLTA"],0,$prai]);
-        }
+        //     $inserta = "INSERT INTO  F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
+        //     $exec = $this->con->prepare($inserta);
+        //     $exec -> execute([1,$request->prices["ARTLTA"],0,$prai]);
+        // }
     }
     public function pricesart(Request $request){
         $date = date("Y/m/d H:i");//se gerera la fecha de el dia de hoy con  formato de fecha y hora
