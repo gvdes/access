@@ -231,8 +231,8 @@ class TicketController extends Controller{
             $fpas = [['CPTLCO'=>'[V]', 'FPALCO'=>'VALE Nº: '.$val['CODANT'],'IMPORTE'=>$valv , 'LINLCO' => 1, 'ANTLCO'=>$val['CODANT']]];
         }else if($val == null){
             $fpas = [
-                ['CPTLCO'=>$fdig['desc'], 'FPALCO'=>$fdig['id'],'IMPORTE'=>$fdigvl, 'LINLCO' => 1, 'ANTLCO'=>0],
-                ['CPTLCO'=>"CONTADO EFECTIVO", 'FPALCO'=>"EFE",'IMPORTE'=>$efe-$cambio, 'LINLCO' => 2, 'ANTLCO'=>0]
+                ['CPTLCO'=>"CONTADO EFECTIVO", 'FPALCO'=>"EFE",'IMPORTE'=>$efe-$cambio, 'LINLCO' => 2, 'ANTLCO'=>0],
+                ['CPTLCO'=>$fdig['desc'], 'FPALCO'=>$fdig['id'],'IMPORTE'=>$fdigvl, 'LINLCO' => 1, 'ANTLCO'=>0]
             ];
         }else if($fdig == null){
             $fpas = [
