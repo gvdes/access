@@ -969,4 +969,351 @@ class TicketController extends Controller{
 
     }
 
+    public function getTicket($ticket){  
+        $documento = env('DOCUMENTO');
+        $empresa = "SELECT DESTPV, CTT1TPV, CTT2TPV, CTT3TPV, CTT4TPV, CTT5TPV, PTT1TPV, PTT2TPV, PTT3TPV, PTT4TPV, PTT5TPV, PTT6TPV, PTT7TPV, PTT8TPV FROM T_TPV WHERE CODTPV = $documento";
+        $exec = $this->con->prepare($empresa);
+        $exec->execute();
+        $text = $exec->fetch(\PDO::FETCH_ASSOC);// encabezado empresa
+        $enctck = "
+        SELECT
+        T_TER.DESTER AS TERMINAL,
+        F_FAC.TIPFAC&'-'&Format(F_FAC.CODFAC,'000000') AS TICKET,
+        Format(F_FAC.FECFAC, 'dd-mm-YYYY') AS FECHA,
+        Format(F_FAC.HORFAC, 'hh:nn:ss') AS HORA,
+        F_FPA.DESFPA AS PAGOPRINCIPAL,
+        F_FAC.CLIFAC AS CLIENTE,
+        F_FAC.CNOFAC AS NOMBRECLIENTE,
+        F_FAC.CDOFAC AS DOMICILIO,
+        F_FAC.CPOFAC AS POBALCION,
+        F_FAC.CPOFAC AS CODIGOPOSTAL,
+        F_FAC.CPRFAC AS PROVINCIA,
+        F_FAC.CAMFAC AS CAMBIO,
+        T_DEP.NOMDEP AS DEPENDIENTE,
+        F_FAC.TOTFAC AS TOTAL
+        FROM (((F_FAC
+        INNER JOIN T_TER ON T_TER.CODTER = F_FAC.TERFAC)
+        INNER JOIN F_FPA ON F_FPA.CODFPA =  F_FAC.FOPFAC)
+        INNER JOIN T_DEP ON T_DEP.CODDEP = F_FAC.DEPFAC)
+        WHERE  F_FAC.TIPFAC&'-'&F_FAC.CODFAC = "."'".$ticket."'";
+        $exec = $this->con->prepare($enctck);
+        $exec->execute();
+        $encabezado = $exec->fetch(\PDO::FETCH_ASSOC);// encabezado ticket
+        if($encabezado){
+            $prdtck = "
+            SELECT
+            ARTLFA AS ARTICULO,
+            DESLFA AS DESCRIPCION,
+            CANLFA AS CANTIDAD,
+            PRELFA AS PRECIO,
+            TOTLFA AS TOTAL
+            FROM F_LFA
+            WHERE TIPLFA&'-'&CODLFA = "."'".$ticket."'";
+            $exec = $this->con->prepare($prdtck);
+            $exec->execute();
+            $products = $exec->fetchall(\PDO::FETCH_ASSOC);// products ticket
+            $pgstck = "
+            SELECT 
+            CPTLCO AS CONCEPTOPAGO,
+            IMPLCO AS IMPORTE
+            FROM F_LCO
+            WHERE  TFALCO&'-'&CFALCO = "."'".$ticket."'";
+            $exec = $this->con->prepare($pgstck);
+            $exec->execute();
+            $pagos = $exec->fetchall(\PDO::FETCH_ASSOC);// pagos ticket
+        
+            $res = [
+                "empresa"=>$text,
+                "header"=>$encabezado,
+                "products"=>$products,
+                "payments"=>$pagos
+            ];
+            return response()->json( mb_convert_encoding($res,'UTF-8') ,200);
+        }else{
+            return response()->json('No se encontro el ticket :/',401);
+        }
+
+    }
+
+    public function CreateVale(Request $request){
+        $impresora = $request->print;
+        $ticket= $request->ticket;
+        $products = $request->products;
+        $creacion = $request->created;
+        $devolucion = $this->devVal($ticket,$products,$creacion,$impresora['ip_address']);
+        if($devolucion){
+            $vale = $this->creatVal($devolucion,$impresora['ip_address']);
+            if($vale['mmsg'] == true){
+                return response()->json($vale,200);
+            }else{
+                return response()->json('No se pudo realizar el vale',500);
+            }
+        }else{
+            return response()->json('No se pudo realizar el la devolucion',500);
+        }
+    }
+
+    public function devVal($ticket,$products,$creacion,$printer){
+        $date = date("Y/m/d H:i");//horario para la hora
+        $hour = "01/01/1900 ".explode(" ", $date)[1];//hora para el ticket
+        $horad = explode(" ", $date)[1];
+        $fecha =  date("d/m/Y");
+        $existck = "SELECT * FROM F_FAC WHERE TIPFAC&'-'&CODFAC = "."'".$ticket['ticket']."'";
+        $exec = $this->con->prepare($existck);
+        $exec->execute();
+        $tck = $exec->fetch(\PDO::FETCH_ASSOC);
+
+        if($tck){
+            if($tck['TOTFAC'] > 0){
+
+            $fpas = [['CPTLCO'=>"CONTADO EFECTIVO", 'FPALCO'=>"EFT",'IMPORTE'=>0, 'LINLCO' => 1]];
+            
+            if(count($fpas) != 1){
+                $fpa2 = $fpas[0]['IMPORTE'];
+                $fpa1 = $fpas[1]['IMPORTE'];
+            }else{
+                $fpa1 = $fpas[0]['IMPORTE'];
+                $fpa2 = 0;
+            }
+
+
+                if($products){
+                    $total = 0;
+                    foreach($products as $key => $product){
+                        $products[$key]['change'] *= - 1;
+                        $products[$key]['_chantot'] *= - 1;
+                        $total += $products[$key]['_chantot'];
+                    }
+                    // return intval(explode("-",$ticket['ticket'])[0]);
+                    $terminal = "SELECT T_TER.*  FROM T_TER INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.DOCTER   WHERE T_DOC.TIPDOC = ".intval(explode("-",$ticket['ticket'])[0]);
+                    $exec = $this->con->prepare($terminal);
+                    $exec->execute();
+                    $codter = $exec->fetch(\PDO::FETCH_ASSOC);
+                    $nomter = $codter['DESTER'];
+                    $idterminal = str_pad($codter['CODTER'], 4, "0", STR_PAD_LEFT)."00".date('ymd');
+
+                    $codmax = "SELECT MAX(CODFAC) as maxi FROM F_FAC WHERE TIPFAC = '9'";
+                    $exec = $this->con->prepare($codmax);
+                    $exec->execute();
+                    $max = $exec->fetch(\PDO::FETCH_ASSOC);
+                    $codigo = $max['maxi'] + 1;
+
+
+                    $column = ["TIPFAC","CODFAC","FECFAC", "ALMFAC","AGEFAC","CLIFAC","CNOFAC","CDOFAC","CPOFAC","CCPFAC","CPRFAC","TELFAC","NET1FAC","BAS1FAC","TOTFAC","FOPFAC","PRIFAC","VENFAC","HORFAC","USUFAC","USMFAC","TIVA2FAC","TIVA3FAC","EDRFAC","FUMFAC","BCOFAC","TPVIDFAC","ESTFAC","TERFAC","DEPFAC","EFEFAC","CAMFAC","EFSFAC"];
+                    $factura = [
+                        "9",//
+                        $codigo,//
+                        $fecha,
+                        "GEN",
+                        $tck['AGEFAC'],
+                        $tck['CLIFAC'],
+                        $tck['CNOFAC'],
+                        $tck['CDOFAC'],
+                        $tck['CPOFAC'],
+                        $tck['CCPFAC'],
+                        $tck['CPRFAC'],
+                        $tck['TELFAC'],
+                        $total,
+                        $total,
+                        $total,
+                        'EFE',
+                        "Devolucion por vale",
+                        $fecha,
+                        $hour,
+                        27,
+                        27,
+                        1,
+                        2,
+                        date('Y'),
+                        $fecha,
+                        1,
+                        $idterminal,
+                        2,
+                        intval($codter['CODTER']),
+                        intval($tck['DEPFAC']),
+                        0,
+                        $total * 1,
+                        0
+                    ];
+                    $impcol = implode(",",$column);
+                    $signos = implode(",",array_fill(0, count($column),'?'));
+                    $sql = "INSERT INTO F_FAC ($impcol) VALUES ($signos)";//se crea el query para insertar en la tabla
+                    $exec = $this->con->prepare($sql);
+                    $res = $exec -> execute($factura);
+                    if($res){
+                        $count = 1;
+                        $nwproducts = [];
+                        foreach($products as $product){
+
+
+                            $nwproducts[] = [
+                                'ARTLFA'=>$product['ARTICULO'],
+                                'DESLFA'=> $product['DESCRIPCION'],
+                                'CANLFA'=>$product['change'],
+                                'PRELFA'=>$product['PRECIO'],
+                                'TOTLFA'=>$product['_chantot'],
+                            ];
+
+
+                            $upd = [
+                                $product['change'],
+                                $product['change'],
+                                $product['ARTICULO'],
+                            ];
+                            $ins = [
+                                "9",
+                                $codigo,
+                                $count,
+                                $product['ARTICULO'],
+                                $product['DESCRIPCION'],
+                                $product['change'],
+                                $product['PRECIO'],
+                                $product['_chantot'],
+
+                            ];
+
+                            $product = "INSERT INTO F_LFA (TIPLFA,CODLFA,POSLFA,ARTLFA,DESLFA,CANLFA,PRELFA,TOTLFA) VALUES (?,?,?,?,?,?,?,?,?)";
+                            $exec = $this->con->prepare($product);
+                            $exec -> execute($ins);
+    
+    
+                            $updatesto = "UPDATE F_STO SET DISSTO = DISSTO - ? , ACTSTO = ACTSTO - ? WHERE ALMSTO = 'GEN' AND ARTSTO = ?";
+                            $exec = $this->con->prepare($updatesto);
+                            $exec -> execute($upd);
+                            $count++;
+
+
+                        }
+                        $header = [
+                            "terminal"=>"CAMBIOS Y DEVOLUCIONES",
+                            "ticket"=>"9-".str_pad($codigo,6,0,STR_PAD_LEFT),
+                            "fecha"=>$fecha,
+                            "hora"=>$horad,
+                            "nomcli"=>$tck['CNOFAC'],
+                            "direccion"=>$tck['CDOFAC']." ".$tck['CPOFAC'],
+                            "nose"=>$tck['CPRFAC'],
+                            "dependiente"=>$creacion,
+                            "total"=>$total,
+                            "observacion"=>"Vale creado del TICKET => ".$ticket['ticket'],
+                            "cambio"=>$total * -1,
+                            "products"=>$nwproducts,
+                            "pagos"=>$fpas,
+                            "desfpa"=>$fpas[0],
+                            "impresora"=>$printer
+                        ];
+                       $print = $this->printck($header);
+                       if($print){
+                        $res = [
+                            "dev"=>$header['ticket'],
+                            "fecha"=>$header['fecha'],
+                            "cliente"=>$tck['CLIFAC'],
+                            "nomcli"=>$tck['CNOFAC'],
+                            "terminal"=>$codter['CODTER'],
+                            "total"=>$total,
+                            "tpvid"=>$idterminal,
+                            "creacion"=>$creacion,
+                            "original"=>explode("-",$ticket['ticket'])[0]."-".str_pad(explode("-",$ticket['ticket'])[1],6,0,STR_PAD_LEFT),
+                            "print"=>true
+                        ];
+                    }else{
+                        $res = [
+                            "mssg"=>$header['ticket'],
+                            'print'=>false
+                        ];
+                    }
+                    return $res;
+                    }else{return response()->json("No se creo la devolucion");}
+                }else{return response()->json("No hay productos ?",404);}
+            }else{return response()->json("El ticket es menor o igual a 0",401);}
+        }else{return response()->json('El ticket no existe',404);}
+    
+    }
+
+    public function creatVal($devolucion,$print){
+        $observacion = "Vale por la devolución grabada en la factura nº: ".$devolucion['dev'];
+        $max = "SELECT MAX(CODANT) + 1 AS MAX FROM F_ANT";
+        $exec = $this->con->prepare($max);
+        $exec->execute();
+        $codigo = $exec->fetch(\PDO::FETCH_ASSOC);
+        $ins = [
+            intval($codigo['MAX']),
+            $devolucion['fecha'],
+            intval($devolucion['cliente']),
+            $devolucion['total'] * -1,
+            0,
+            $observacion,
+            intval($devolucion['terminal']),
+            $devolucion['tpvid'],
+            'DF'.$devolucion['original'],
+        ];
+        $insertarvale = "INSERT INTO F_ANT (CODANT,FECANT,CLIANT,IMPANT,ESTANT,OBSANT,CAJANT,TPVIDANT,DORANT) VALUES(?,?,?,?,?,?,?,?,?)";
+        $exec = $this->con->prepare($insertarvale);
+        $res = $exec->execute($ins);
+        if($res){
+            $devolucion['vale'] = $codigo['MAX'];
+            $imp = $this->ImpresionVale($devolucion, $print);
+            if($imp){
+                return [
+                    "mmsg"=>true,
+                    "devolucion"=>$devolucion['dev'],
+                    "vale"=>$devolucion['vale']
+                ];
+            }else{
+                return [
+                    "mmsg"=>false,
+                    "devolucion"=>$devolucion['dev'],
+                    "vale"=>''
+                ];
+            }
+        }else{
+            return ["mmsg"=>false];
+        }
+
+    }
+
+    public function ImpresionVale($vale,$printers){
+        $documento = env('DOCUMENTO');
+        // $printers = "192.168.10.100";
+        $sql = "SELECT CTT1TPV, CTT2TPV, CTT3TPV, CTT4TPV, CTT5TPV, PTT1TPV, PTT2TPV, PTT3TPV, PTT4TPV, PTT5TPV, PTT6TPV, PTT7TPV, PTT8TPV FROM T_TPV WHERE CODTPV = $documento";
+        $exec = $this->con->prepare($sql);
+        $exec->execute();
+        $text = $exec->fetch(\PDO::FETCH_ASSOC);//OK
+        try{
+            $connector = new NetworkPrintConnector($printers, 9100, 3);
+            $printer = new Printer($connector);
+        }catch(\Exception $e){ return null;}
+
+            try {
+                try{
+                    $printer->setJustification(printer::JUSTIFY_LEFT);
+                    $printer->text("------------------------------------------------\n");
+                    $printer->text($text["CTT1TPV"]."\n");
+                    $printer->text($text["CTT3TPV"]." \n");
+                    $printer->text($text["CTT5TPV"]." \n");
+                    $printer->text(" \n");
+                    $printer->text(" \n");
+                    $printer->text(mb_convert_encoding($vale["nomcli"],'UTF-8')." \n");
+                    $printer->text(" \n");
+                    $printer->text(" \n");
+                    $printer->text("N.I.F.:"." \n");
+                    $printer->text("_______________________________________________ \n");
+                    $printer->text("N° ".$vale['vale']." Fecha: ".$vale["fecha"]." \n");
+                    $printer->text("Realizado por: ".$vale['creacion']." \n");
+                    $printer->text("_______________________________________________ \n");
+                    $printer->setEmphasis(true);
+                    $printer->text("IMPORTE VALE:"." \n");
+                    $printer->setJustification(printer::JUSTIFY_RIGHT);
+                    $printer->text(doubleval($vale['total'] * -1)." \n");
+                    $printer->text("_______________________________________________ \n");
+                    $printer -> cut();
+                    $printer -> close();
+                }catch(Exception $e){}
+
+            } finally {
+                $printer -> close();
+                return true;
+            }
+                return false;
+    }
+
 }

@@ -154,10 +154,13 @@ $router->group(['prefix' => 'modify'], function () use ($router){
     $router->get('/getClient', 'TicketController@getClient');
     $router->get('/getPrices', 'TicketController@getPrices');
     $router->get('/vales', 'TicketController@vales');
+    $router->get('/getTicket/{ticket}', 'TicketController@getTicket');
     $router->post('/newmod', 'TicketController@newMod');
     $router->post('/modificacion', 'TicketController@modificacion');
     $router->post('/nwtck', 'TicketController@nwtck');
     $router->post('/retirada', 'TicketController@retirada');
+    $router->post('/createVal', 'TicketController@CreateVale');
+
 });
 
 $router->group(['prefix' => 'reports'], function () use ($router){
