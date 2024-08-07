@@ -1172,7 +1172,7 @@ class TicketController extends Controller{
 
                             ];
 
-                            $product = "INSERT INTO F_LFA (TIPLFA,CODLFA,POSLFA,ARTLFA,DESLFA,CANLFA,PRELFA,TOTLFA) VALUES (?,?,?,?,?,?,?,?,?)";
+                            $product = "INSERT INTO F_LFA (TIPLFA,CODLFA,POSLFA,ARTLFA,DESLFA,CANLFA,PRELFA,TOTLFA) VALUES (?,?,?,?,?,?,?,?)";
                             $exec = $this->con->prepare($product);
                             $exec -> execute($ins);
     
