@@ -165,6 +165,7 @@ $router->group(['prefix' => 'modify'], function () use ($router){
 
 $router->group(['prefix' => 'reports'], function () use ($router){
     $router->get('/getCash', 'ReportController@getCash');
+    $router->get('/getCashCard', 'ReportController@getCashCard');
     $router->get('/getSales', 'ReportController@getSales');
     $router->get('/getSalesPerMonth/{month}', 'ReportController@getSalesPerMonth');
     $router->post('/filter', 'ReportController@filter');
