@@ -197,8 +197,8 @@ class TicketController extends Controller{
 
     public function nwtck(Request $request){
         $primp =[];
-        $date = date("Y/m/d H:i");//horario para la hora
-        $hour = "01/01/1900 ".explode(" ", $date)[1];//hora para el ticket
+        $date = date("Y/m/d H:i");
+        $hour = "01/01/1900 ".explode(" ", $date)[1];
         $horad = explode(" ", $date)[1];
         $fecha =  date("d/m/Y");
         $all = $request->all();
@@ -208,59 +208,73 @@ class TicketController extends Controller{
         $tckdev = $all['serdev'].'-'.$all['foldev'];
         $total = $all['total'];
         $serie = $all['serdev'];
+        $cambio = $all['cambio'];
         $fdps = $all['fdp'];
-        $efe = $fdps['efedig']['EFE'];
-        $fdig = $fdps['efedig']['DIG']['id'];
-        $fdigvl = $fdps['efedig']['DIG']['val'];
-        $val = $fdps['vale'];
+        $formas = $fdps['efedig'];
+        $newFormas = []; 
+        $efeIndex = null;
+        $rescam = $cambio;
+        foreach ($formas as $index => $forma) {
+            if ($forma['id']['id'] === 'EFE') {
+                $efeIndex = $index;
+                break;
+            }
+        }
+        
+        if ($efeIndex !== null) {
+            $forma = $formas[$efeIndex];
+            $desc = $forma['id']['desc'];
+            $id = $forma['id']['id'];
+            
+            if ($forma['val'] >= $rescam) {
+                $importe = $forma['val'] - $rescam;
+                $rescam = 0;
+            } else {
+                $importe = 0;
+                $rescam -= $forma['val'];
+            }
+        
+            $newFormas[] = [
+                'CPTLCO' => $desc,
+                'FPALCO' => $id,
+                'IMPORTE' => $importe,
+                'ANTLCO' => 0
+            ];
+        }
+        
+        foreach ($formas as $index => $forma) {
+            if ($index !== $efeIndex) {
+                $desc = $forma['id']['desc'];
+                $id = $forma['id']['id'];
+        
+                if ($rescam > 0) {
+                    if ($forma['val'] >= $rescam) {
+                        $importe = $forma['val'] - $rescam;
+                        $rescam = 0;
+                    } else {
+                        $importe = 0;
+                        $rescam -= $forma['val'];
+                    }
+                } else {
+                    $importe = $forma['val'];
+                }
+        
+                $newFormas[] = [
+                    'CPTLCO' => $desc,
+                    'FPALCO' => $id,
+                    'IMPORTE' => $importe,
+                    'ANTLCO' => 0
+                ];
+            }
+        }
         $clifac = $all['cliente'];
+        $val = $fdps['vale'];// cobro de vale  
         if($val <> null){
             doubleval($valv=$fdps['vale']['IMPANT']);
+            $newFormas[] = ['CPTLCO'=>'[V]', 'FPALCO'=>'VALE Nº: '.$val['CODANT'],'IMPORTE'=>$valv , 'ANTLCO'=>$val['CODANT']];
         }else{
             $valv=0;
-        }
-        $cambio = ($valv + $fdigvl + $efe) - $total;
-
-        if($fdig == null && $val == null){
-            $fpas = [['CPTLCO'=>"CONTADO EFECTIVO", 'FPALCO'=>"EFE",'IMPORTE'=>$efe-$cambio, 'LINLCO' => 1, 'ANTLCO'=>0]];
-        }else if($val == null && $efe == 0){
-            $fpas = [['CPTLCO'=>$fdig['desc'], 'FPALCO'=>$fdig['id'],'IMPORTE'=>$fdigvl , 'LINLCO' => 1, 'ANTLCO'=>0]];
-        }else if($val ==null && $fdig == null){
-            $fpas = [['CPTLCO'=>"CONTADO EFECTIVO", 'FPALCO'=>"EFE",'IMPORTE'=>$efe-$cambio , 'LINLCO' => 1, 'ANTLCO'=>0]];
-        }else if($efe == 0 && $fdig == null){
-            $fpas = [['CPTLCO'=>'[V]', 'FPALCO'=>'VALE Nº: '.$val['CODANT'],'IMPORTE'=>$valv , 'LINLCO' => 1, 'ANTLCO'=>$val['CODANT']]];
-        }else if($val == null){
-            $fpas = [
-                ['CPTLCO'=>"CONTADO EFECTIVO", 'FPALCO'=>"EFE",'IMPORTE'=>$efe-$cambio, 'LINLCO' => 2, 'ANTLCO'=>0],
-                ['CPTLCO'=>$fdig['desc'], 'FPALCO'=>$fdig['id'],'IMPORTE'=>$fdigvl, 'LINLCO' => 1, 'ANTLCO'=>0]
-            ];
-        }else if($fdig == null){
-            $fpas = [
-                ['CPTLCO'=>"CONTADO EFECTIVO", 'FPALCO'=>"EFE",'IMPORTE'=>$efe-$cambio, 'LINLCO' => 1, 'ANTLCO'=>0],
-                ['CPTLCO'=>'[V]', 'FPALCO'=>'VALE Nº: '.$val['CODANT'],'IMPORTE'=>$valv, 'LINLCO' => 2, 'ANTLCO'=>$val['CODANT']]
-            ];
-        }else if($efe == 0){
-            $fpas = [
-                ['CPTLCO'=>$fdig['desc'], 'FPALCO'=>$fdig['id'],'IMPORTE'=>$fdigvl, 'LINLCO' => 1, 'ANTLCO'=>0],
-                ['CPTLCO'=>'[V]', 'FPALCO'=>'VALE Nº: '.$val['CODANT'],'IMPORTE'=>$valv, 'LINLCO' => 2, 'ANTLCO'=>$val['CODANT']]
-            ];
-        }else{
-            $fpas = [
-                ['CPTLCO'=>"CONTADO EFECTIVO", 'FPALCO'=>"EFE",'IMPORTE'=>$efe-$cambio, 'LINLCO' => 1, 'ANTLCO'=>0],
-                ['CPTLCO'=>$fdig['desc'], 'FPALCO'=>$fdig['id'],'IMPORTE'=>$fdigvl, 'LINLCO' => 2, 'ANTLCO'=>0],
-                ['CPTLCO'=>'[V]', 'FPALCO'=>'VALE Nº: '.$val['CODANT'],'IMPORTE'=>$valv, 'LINLCO' => 3, 'ANTLCO'=>$val['CODANT']]
-            ];
-        }
-
-        if(count($fpas) != 1){
-            $fpa1 = $fpas[0]['IMPORTE'];
-            $fpa2 = $fpas[1]['IMPORTE'];
-        }else{
-            $fpa1 = $fpas[0]['IMPORTE'];
-            $fpa2 = 0;
-        }
-
-
+        }          
         $exisdev = "SELECT * FROM F_FAC WHERE TDRFAC&'-'&CDRFAC ="."'".$tckdev."'";
         $exec = $this->con->prepare($exisdev);
         $exec->execute();
@@ -302,9 +316,6 @@ class TicketController extends Controller{
                 $exec = $this->con->prepare($ups);
                 $exec->execute($updval);
             }
-
-
-
             $column = ["TIPFAC","CODFAC","FECFAC", "ALMFAC","AGEFAC","CLIFAC","CNOFAC","CDOFAC","CPOFAC","CCPFAC","CPRFAC","TELFAC","NET1FAC","BAS1FAC","TOTFAC","FOPFAC","PRIFAC","VENFAC","HORFAC","USUFAC","USMFAC","TIVA2FAC","TIVA3FAC","EDRFAC","FUMFAC","BCOFAC","TPVIDFAC","ESTFAC","TERFAC","DEPFAC","EFEFAC","CAMFAC","EFSFAC","TDRFAC","CDRFAC","EFVFAC"];
             $factura = [
                 $serie,//
@@ -322,7 +333,7 @@ class TicketController extends Controller{
                 $total,
                 $total,
                 $total,
-                $fpas[0]['FPALCO'],
+                $newFormas[0]['FPALCO'] ,
                 "Ticket nuevo por : devolucion".$tckdev." de el ticket : ".$devolucion['TIPFAC'].'-'.$devolucion['CODFAC']." creado por : ".$create,
                 $fecha,
                 $hour,
@@ -337,9 +348,9 @@ class TicketController extends Controller{
                 2,
                 intval($codter['CODTER']),
                 intval($devolucion['DEPFAC']),
-                $fpas[0]['FPALCO'] == 'EFE' ? $fpa1 + $cambio : $fpa1,
+                $newFormas[0]['IMPORTE'] + $cambio,
                 $cambio,
-                $fpa2 ,
+                $newFormas[1]['IMPORTE'],
                 $devolucion['TIPFAC'],
                 intval($devolucion['CODFAC']),
                 $valv
@@ -392,24 +403,29 @@ class TicketController extends Controller{
                     $contap++;
                 }
                 $count = 1;
-                foreach($fpas as $fip){
-                    $inspg = [
-                        $serie,
-                        $codigo,
-                        $count,
-                        $fecha,
-                        $fip['IMPORTE'],
-                        $fip['CPTLCO'],
-                        $fip['FPALCO'],
-                        $cobro,
-                        $idterminal,
-                        $codter['CODTER']
-                    ];
-                    $faclco = "INSERT INTO F_LCO (TFALCO,CFALCO,LINLCO,FECLCO,IMPLCO,CPTLCO,FPALCO,MULLCO,TPVIDLCO,TERLCO) VALUES (?,?,?,?,?,?,?,?,?,?) ";
-                    $exec = $this->con->prepare($faclco);
-                    $exec->execute($inspg);
-                    $count++;
-                    $cobro++;
+                foreach($newFormas as $fip){
+                    if($fip['IMPORTE'] == 0){
+
+                    }else{
+                        $inspg = [
+                            $serie,
+                            $codigo,
+                            $count,
+                            $fecha,
+                            $fip['IMPORTE'],
+                            $fip['CPTLCO'],
+                            $fip['FPALCO'],
+                            $cobro,
+                            $idterminal,
+                            $codter['CODTER']
+                        ];
+                        $faclco = "INSERT INTO F_LCO (TFALCO,CFALCO,LINLCO,FECLCO,IMPLCO,CPTLCO,FPALCO,MULLCO,TPVIDLCO,TERLCO) VALUES (?,?,?,?,?,?,?,?,?,?) ";
+                        $exec = $this->con->prepare($faclco);
+                        $exec->execute($inspg);
+                        $count++;
+                        $cobro++;
+                    }
+
                 }
                 $header = [
                     "terminal"=>$nomter,
@@ -424,8 +440,8 @@ class TicketController extends Controller{
                     "observacion"=>"Modificacion de el ticket ".$tckdev,
                     "cambio"=>$cambio,
                     "products"=>$primp,
-                    "pagos"=>$fpas,
-                    "desfpa"=>$fpas[0],
+                    "pagos"=>$newFormas,
+                    "desfpa"=>$newFormas[0],
                     "impresora"=>$print
                 ];
                 $print = $this->printck($header);
@@ -782,14 +798,14 @@ class TicketController extends Controller{
                     $printer->text(mb_convert_encoding($header["nomcli"],'UTF-8')." \n");
                     $printer->text(mb_convert_encoding($header["direccion"],'UTF-8')." \n");
                     $printer->text(mb_convert_encoding($header["nose"],'UTF-8')." \n");
-                    $printer->text($header["nose"]." \n");
+                    // $printer->text($header["nose"]." \n");
                     $printer->text("_______________________________________________ \n");
                     $printer->text("ARTICULO        UD.        PRECIO        TOTAL \n");
                     $printer->text("_______________________________________________ \n");
                     $printer -> setFont(Printer::FONT_B);
                     foreach($header['products'] as $product){
                         $printer->setJustification(printer::JUSTIFY_LEFT);
-                        $printer->text($product['ARTLFA']."   ".mb_convert_encoding($product['DESLFA'], 'UTF-8')." \n");
+                        $printer->text(mb_convert_encoding($product['ARTLFA'], 'UTF-8')."   ".mb_convert_encoding($product['DESLFA'], 'UTF-8')." \n");
                                $printer->setJustification(printer::JUSTIFY_RIGHT);
                                $quantity = str_pad(number_format($product['CANLFA'],2,'.',''),15);
                                $arti [] = $product['CANLFA'];
