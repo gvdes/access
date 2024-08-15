@@ -215,10 +215,12 @@ class TicketController extends Controller{
         $efeIndex = null;
         $rescam = $cambio;
         foreach ($formas as $index => $forma) {
+            if (is_array($forma) && isset($forma['id']) && isset($forma['id']['desc']) && isset($forma['id']['id']) && isset($forma['val'])) {
             if ($forma['id']['id'] === 'EFE') {
                 $efeIndex = $index;
                 break;
             }
+        }
         }
         
         if ($efeIndex !== null) {
@@ -243,29 +245,31 @@ class TicketController extends Controller{
         }
         
         foreach ($formas as $index => $forma) {
-            if ($index !== $efeIndex) {
-                $desc = $forma['id']['desc'];
-                $id = $forma['id']['id'];
-        
-                if ($rescam > 0) {
-                    if ($forma['val'] >= $rescam) {
-                        $importe = $forma['val'] - $rescam;
-                        $rescam = 0;
+            if (is_array($forma) && isset($forma['id']) && isset($forma['id']['desc']) && isset($forma['id']['id']) && isset($forma['val'])) {
+                if ($index !== $efeIndex) {
+                    $desc = $forma['id']['desc'];
+                    $id = $forma['id']['id'];
+            
+                    if ($rescam > 0) {
+                        if ($forma['val'] >= $rescam) {
+                            $importe = $forma['val'] - $rescam;
+                            $rescam = 0;
+                        } else {
+                            $importe = 0;
+                            $rescam -= $forma['val'];
+                        }
                     } else {
-                        $importe = 0;
-                        $rescam -= $forma['val'];
+                        $importe = $forma['val'];
                     }
-                } else {
-                    $importe = $forma['val'];
+            
+                    $newFormas[] = [
+                        'CPTLCO' => $desc,
+                        'FPALCO' => $id,
+                        'IMPORTE' => $importe,
+                        'ANTLCO' => 0
+                    ];
                 }
-        
-                $newFormas[] = [
-                    'CPTLCO' => $desc,
-                    'FPALCO' => $id,
-                    'IMPORTE' => $importe,
-                    'ANTLCO' => 0
-                ];
-            }
+            } 
         }
         $clifac = $all['cliente'];
         $val = $fdps['vale'];// cobro de vale  
@@ -350,7 +354,7 @@ class TicketController extends Controller{
                 intval($devolucion['DEPFAC']),
                 $newFormas[0]['IMPORTE'] + $cambio,
                 $cambio,
-                $newFormas[1]['IMPORTE'],
+                isset($newFormas[1]['IMPORTE']) ? $newFormas[1]['IMPORTE'] : 0,
                 $devolucion['TIPFAC'],
                 intval($devolucion['CODFAC']),
                 $valv
