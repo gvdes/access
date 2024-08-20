@@ -272,7 +272,7 @@ class ReportController extends Controller{
     }
 
     public function getSalesPerMonth($month){
-        
+
         $report = [
             "salesant"=>0,
             "salesact"=>0,
@@ -349,13 +349,14 @@ class ReportController extends Controller{
             }
 
             $ventdepmonth = "SELECT
-            T_DEP.NOMDEP,
-            SUM(F_FAC.TOTFAC) AS VENTA
-            FROM T_DEP
-            INNER JOIN F_FAC ON F_FAC.DEPFAC = T_DEP.CODDEP
+            T_TER.DESTER,
+            SUM(F_FAC.TOTFAC) AS VENTA,
+            COUNT(F_FAC.CODFAC) AS TCK
+            FROM T_TER
+            INNER JOIN F_FAC ON F_FAC.TERFAC = T_TER.CODTER
             WHERE MONTH(F_FAC.FECFAC) = $month AND DAY(F_FAC.FECFAC) <= $day
-            GROUP BY T_DEP.NOMDEP
-            ORDER BY SUM(F_FAC.TOTFAC) DESC
+            GROUP BY T_TER.DESTER
+            ORDER BY SUM(F_FAC.TOTFAC) ASC
             ";
             $vendep = $this->con->prepare($ventdepmonth);
             $vendep->execute();
@@ -365,13 +366,14 @@ class ReportController extends Controller{
             }
 
             $ventdepday = "SELECT
-            T_DEP.NOMDEP,
-            SUM(F_FAC.TOTFAC) AS VENTA
-            FROM T_DEP
-            INNER JOIN F_FAC ON F_FAC.DEPFAC = T_DEP.CODDEP
+            T_TER.DESTER,
+            SUM(F_FAC.TOTFAC) AS VENTA,
+            COUNT(F_FAC.CODFAC) AS TCK
+            FROM T_TER
+            INNER JOIN F_FAC ON F_FAC.TERFAC = T_TER.CODTER
             WHERE F_FAC.FECFAC = DATE()
-            GROUP BY T_DEP.NOMDEP
-            ORDER BY SUM(F_FAC.TOTFAC) DESC
+            GROUP BY T_TER.DESTER
+            ORDER BY SUM(F_FAC.TOTFAC) ASC
             ";
             $vendepd = $this->con->prepare($ventdepday);
             $vendepd->execute();
