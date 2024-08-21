@@ -613,7 +613,7 @@ class ProductController extends Controller{
     }
     public function insertpub(request $request){
         $products =  $request->products;
-        foreach($product as $products){
+        foreach($products as $products){
             $cost = ($product["PCOART"]*1.05);
             $eanart =$product["EANART"];
             $famart =$product["FAMART"];
