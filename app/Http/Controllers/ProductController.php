@@ -564,23 +564,23 @@ class ProductController extends Controller{
 
         foreach($articulos as $art){
             foreach($colsTabProds as $col){ $art[$col] = utf8_encode($art[$col]); }
-
-
-
-            $url ="192.168.90.253:1619/access/public/product/insertpub";
-            $ch = curl_init($url);
-            $data = json_encode(["products" => $art]);
-            curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
-            curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_HEADER, 0);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
-            $ex = curl_exec($ch);
-            curl_close($ch);
-
-
+            $artic[]=$art;
         }
+
+
+
+        $url ="192.168.90.253:1619/access/public/product/insertpub";
+        $ch = curl_init($url);
+        $data = json_encode(["products" => $art]);
+        curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+        $ex = curl_exec($ch);
+        curl_close($ch);
+
             return response()->json(["products" => $ex,
                                     "prices" => $dat
         ]);
@@ -593,97 +593,102 @@ class ProductController extends Controller{
         $exec = $this->con->prepare($prices);
         $exec -> execute();
         $precios=$exec->fetchall(\PDO::FETCH_ASSOC);
-        foreach($precios as $pre){
+        // foreach($precios as $pre){
 
-            $url ="192.168.90.253:1619/access/public/product/insertpricespub";
-            $ch = curl_init($url);
-            $data = json_encode(["prices" => $pre]);
-            curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
-            curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_HEADER, 0);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
-            $ex = curl_exec($ch);
-            curl_close($ch);
 
-        }
+
+        // }
+        $url ="192.168.90.253:1619/access/public/product/insertpricespub";
+        $ch = curl_init($url);
+        $data = json_encode(["prices" => $precios]);
+        curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+        $ex = curl_exec($ch);
+        curl_close($ch);
         return response()->json($ex);
     }
     public function insertpub(request $request){
-        $cost = ($request->products["PCOART"]*1.05);
-        $eanart =$request->products["EANART"];
-        $famart =$request->products["FAMART"];
-        $uppart =$request->products["UPPART"];
-        $cp1art =$request->products["CP1ART"];
-        $art = "SELECT COUNT(CODART) AS CANTIDAD FROM F_ART WHERE = ?";
-        $exec = $this->con->prepare($art);
-        $exec -> execute([$request->products["CODART"]]);
-        $articulos=$exec->fetchall(\PDO::FETCH_ASSOC);
+        $products =  $request->products;
+        foreach($product as $products){
+            $cost = ($product["PCOART"]*1.05);
+            $eanart =$product["EANART"];
+            $famart =$product["FAMART"];
+            $uppart =$product["UPPART"];
+            $cp1art =$product["CP1ART"];
+            $art = "SELECT COUNT(CODART) AS CANTIDAD FROM F_ART WHERE = ?";
+            $exec = $this->con->prepare($art);
+            $exec -> execute([$product["CODART"]]);
+            $articulos=$exec->fetchall(\PDO::FETCH_ASSOC);
 
-            $artupd = "UPDATE  F_ART SET FUMART = DATE(), PCOART = $cost, EANART = $eanart, FAMART = $famart, UPPART = $uppart, CP1ART = $cp1art WHERE CODART = (?)";
-            $exec = $this->con->prepare($artupd);
-            $exec -> execute([$request->products["CODART"]]);
+                $artupd = "UPDATE  F_ART SET FUMART = DATE(), PCOART = $cost, EANART = $eanart, FAMART = $famart, UPPART = $uppart, CP1ART = $cp1art WHERE CODART = (?)";
+                $exec = $this->con->prepare($artupd);
+                $exec -> execute([$product["CODART"]]);
 
-            $artid = "INSERT INTO  F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART,FALART,FUMART,MPTART,UEQART
-            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATE(),DATE(),?,?)";
-            $exec = $this->con->prepare($artid);
-            $exec -> execute([
-                $request->products["CODART"],
-                $request->products["EANART"],
-                $request->products["FAMART"],
-                $request->products["DESART"],
-                $request->products["DEEART"],
-                $request->products["DETART"],
-                $request->products["DLAART"],
-                $request->products["EQUART"],
-                $request->products["CCOART"],
-                $request->products["PHAART"],
-                $request->products["REFART"],
-                $request->products["FTEART"],
-                $request->products["PCOART"],
-                $request->products["UPPART"],
-                $request->products["CANART"],
-                $request->products["CAEART"],
-                $request->products["UMEART"],
-                $request->products["CP1ART"],
-                $request->products["CP2ART"],
-                $request->products["CP3ART"],
-                $request->products["CP4ART"],
-                $request->products["CP5ART"],
-                $request->products["MPTART"],
-                $request->products["UEQART"],
-                                ]);
-                $almacenes  = [
-                    "GEN"=>"GEN",
-                    "DES"=>"PAN",
-                    "EMP"=>"BOL",
-                    "EXH"=>"DES",
-                    "FDT"=>"CAS"
+                $artid = "INSERT INTO  F_ART (CODART,EANART,FAMART,DESART,DEEART,DETART,DLAART,EQUART,CCOART,PHAART,REFART,FTEART,PCOART,UPPART,CANART,CAEART,UMEART,CP1ART,CP2ART,CP3ART,CP4ART,CP5ART,FALART,FUMART,MPTART,UEQART
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATE(),DATE(),?,?)";
+                $exec = $this->con->prepare($artid);
+                $exec -> execute([
+                    $product["CODART"],
+                    $product["EANART"],
+                    $product["FAMART"],
+                    $product["DESART"],
+                    $product["DEEART"],
+                    $product["DETART"],
+                    $product["DLAART"],
+                    $product["EQUART"],
+                    $product["CCOART"],
+                    $product["PHAART"],
+                    $product["REFART"],
+                    $product["FTEART"],
+                    $product["PCOART"],
+                    $product["UPPART"],
+                    $product["CANART"],
+                    $product["CAEART"],
+                    $product["UMEART"],
+                    $product["CP1ART"],
+                    $product["CP2ART"],
+                    $product["CP3ART"],
+                    $product["CP4ART"],
+                    $product["CP5ART"],
+                    $product["MPTART"],
+                    $product["UEQART"],
+                                    ]);
+                    $almacenes  = [
+                        "GEN"=>"GEN",
+                        "DES"=>"PAN",
+                        "EMP"=>"BOL",
+                        "EXH"=>"DES",
+                        "FDT"=>"CAS"
 
-                ];
-                foreach($almacenes as $alm){
+                    ];
+                    foreach($almacenes as $alm){
 
 
-                    $insertsto = "INSERT INTO F_STO (ARTSTO,ALMSTO,MINSTO,MAXSTO,ACTSTO,DISSTO) VALUES (?,?,?,?,?,?) ";
-                    $exec = $this->con->prepare($insertsto);
-                    $exec -> execute([$request->products["CODART"],$alm,0,0,0,0]);
-                }
-
+                        $insertsto = "INSERT INTO F_STO (ARTSTO,ALMSTO,MINSTO,MAXSTO,ACTSTO,DISSTO) VALUES (?,?,?,?,?,?) ";
+                        $exec = $this->con->prepare($insertsto);
+                        $exec -> execute([$product["CODART"],$alm,0,0,0,0]);
+                    }
+        }
     }
 
     public function insertpricespub(request $request){
+        $prices = $request->prices;
 
-
-        // if($request->prices["TARLTA"] > 1){
-            $updprices =   round($request->prices["PRELTA"]);
+        foreach($prices as $price){
+            $updprices =   round($price["PRELTA"]);
             $upd = "UPDATE F_LTA SET PRELTA = $updprices WHERE ARTLTA = ? AND TARLTA = ?";
             $exec = $this->con->prepare($upd);
-            $exec -> execute([$request->prices["ARTLTA"], $request->prices["TARLTA"]]);
+            $exec -> execute([$price["ARTLTA"], $price["TARLTA"]]);
 
         $insert = "INSERT INTO  F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
         $exec = $this->con->prepare($insert);
-        $exec -> execute([$request->prices["TARLTA"],$request->prices["ARTLTA"],0,round($request->prices["PRELTA"])]);
+        $exec -> execute([$price["TARLTA"],$price["ARTLTA"],0,round($price["PRELTA"])]);
+        }
+        // if($request->prices["TARLTA"] > 1){
 
         // if($request->prices["TARLTA"] == 2){
         //     $pricesnew =   round($request->prices["PRELTA"]);
@@ -927,24 +932,21 @@ class ProductController extends Controller{
 
         foreach($articulos as $art){
             foreach($colsTabProds as $col){ $art[$col] = utf8_encode($art[$col]); }
-
-
-
-            $url ="192.168.140.254:1619/access/public/product/insertpub";
-            $ch = curl_init($url);
-            $data = json_encode(["products" => $art]);
-            curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
-            curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_HEADER, 0);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
-            $ex = curl_exec($ch);
-            curl_close($ch);
-
-
+            $artic[]=$art;
         }
-            return response()->json(["products" => $ex,
+        $url ="192.168.140.254:1619/access/public/product/insertpub";
+        $ch = curl_init($url);
+        $data = json_encode(["products" => $artic]);
+        curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+        $ex = curl_exec($ch);
+        $res = json_decode($ex);
+        curl_close($ch);
+            return response()->json(["products" => $res,
                                     "prices" => $dat
         ]);
         }
@@ -956,21 +958,21 @@ class ProductController extends Controller{
         $exec = $this->con->prepare($prices);
         $exec -> execute();
         $precios=$exec->fetchall(\PDO::FETCH_ASSOC);
-        foreach($precios as $pre){
+        // foreach($precios as $pre){
 
-            $url ="192.168.140.254:1619/access/public/product/insertpricespub";
-            $ch = curl_init($url);
-            $data = json_encode(["prices" => $pre]);
-            curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
-            curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_HEADER, 0);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
-            $ex = curl_exec($ch);
-            curl_close($ch);
 
-        }
-        return response()->json($ex);
+        // }
+        $url ="192.168.140.254:1619/access/public/product/insertpricespub";
+        $ch = curl_init($url);
+        $data = json_encode(["prices" => $precios]);
+        curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+        $ex = curl_exec($ch);
+        curl_close($ch);
+        return $ex;
     }
 }
