@@ -120,7 +120,7 @@ class TicketController extends Controller{
                 "cambio"=>$tck['CAMFAC'],
                 "products"=>$products,
                 "pagos"=>$fpas,
-                "desfpa"=>$fpas[0],
+                "desfpa"=>isset($fpas)? ['CPTLCO'=>'CONTADO EFECTIVO', 'FPALCO'=>'EFE','IMPORTE'=>$tck['TOTFAC'] , 'ANTLCO'=>''] : $fpas[0],
                 "impresora"=>$request->print
                 ];
                 $print = $this->printck($header);
@@ -211,7 +211,7 @@ class TicketController extends Controller{
         $cambio = $all['cambio'];
         $fdps = $all['fdp'];
         $formas = $fdps['efedig'];
-        $newFormas = []; 
+        $newFormas = [];
         $efeIndex = null;
         $rescam = $cambio;
         foreach ($formas as $index => $forma) {
@@ -222,12 +222,12 @@ class TicketController extends Controller{
             }
         }
         }
-        
+
         if ($efeIndex !== null) {
             $forma = $formas[$efeIndex];
             $desc = $forma['id']['desc'];
             $id = $forma['id']['id'];
-            
+
             if ($forma['val'] >= $rescam) {
                 $importe = $forma['val'] - $rescam;
                 $rescam = 0;
@@ -235,7 +235,7 @@ class TicketController extends Controller{
                 $importe = 0;
                 $rescam -= $forma['val'];
             }
-        
+
             $newFormas[] = [
                 'CPTLCO' => $desc,
                 'FPALCO' => $id,
@@ -243,13 +243,13 @@ class TicketController extends Controller{
                 'ANTLCO' => 0
             ];
         }
-        
+
         foreach ($formas as $index => $forma) {
             if (is_array($forma) && isset($forma['id']) && isset($forma['id']['desc']) && isset($forma['id']['id']) && isset($forma['val'])) {
                 if ($index !== $efeIndex) {
                     $desc = $forma['id']['desc'];
                     $id = $forma['id']['id'];
-            
+
                     if ($rescam > 0) {
                         if ($forma['val'] >= $rescam) {
                             $importe = $forma['val'] - $rescam;
@@ -261,7 +261,7 @@ class TicketController extends Controller{
                     } else {
                         $importe = $forma['val'];
                     }
-            
+
                     $newFormas[] = [
                         'CPTLCO' => $desc,
                         'FPALCO' => $id,
@@ -269,16 +269,16 @@ class TicketController extends Controller{
                         'ANTLCO' => 0
                     ];
                 }
-            } 
+            }
         }
         $clifac = $all['cliente'];
-        $val = $fdps['vale'];// cobro de vale  
+        $val = $fdps['vale'];// cobro de vale
         if($val <> null){
             doubleval($valv=$fdps['vale']['IMPANT']);
             $newFormas[] = ['CPTLCO'=>'[V]', 'FPALCO'=>'VALE Nº: '.$val['CODANT'],'IMPORTE'=>$valv , 'ANTLCO'=>$val['CODANT']];
         }else{
             $valv=0;
-        }          
+        }
         $exisdev = "SELECT * FROM F_FAC WHERE TDRFAC&'-'&CDRFAC ="."'".$tckdev."'";
         $exec = $this->con->prepare($exisdev);
         $exec->execute();
@@ -989,7 +989,7 @@ class TicketController extends Controller{
 
     }
 
-    public function getTicket($ticket){  
+    public function getTicket($ticket){
         $documento = env('DOCUMENTO');
         $empresa = "SELECT DESTPV, CTT1TPV, CTT2TPV, CTT3TPV, CTT4TPV, CTT5TPV, PTT1TPV, PTT2TPV, PTT3TPV, PTT4TPV, PTT5TPV, PTT6TPV, PTT7TPV, PTT8TPV FROM T_TPV WHERE CODTPV = $documento";
         $exec = $this->con->prepare($empresa);
@@ -1033,7 +1033,7 @@ class TicketController extends Controller{
             $exec->execute();
             $products = $exec->fetchall(\PDO::FETCH_ASSOC);// products ticket
             $pgstck = "
-            SELECT 
+            SELECT
             CPTLCO AS CONCEPTOPAGO,
             IMPLCO AS IMPORTE
             FROM F_LCO
@@ -1041,7 +1041,7 @@ class TicketController extends Controller{
             $exec = $this->con->prepare($pgstck);
             $exec->execute();
             $pagos = $exec->fetchall(\PDO::FETCH_ASSOC);// pagos ticket
-        
+
             $res = [
                 "empresa"=>$text,
                 "header"=>$encabezado,
@@ -1087,7 +1087,7 @@ class TicketController extends Controller{
             if($tck['TOTFAC'] > 0){
 
             $fpas = [['CPTLCO'=>"CONTADO EFECTIVO", 'FPALCO'=>"EFT",'IMPORTE'=>0, 'LINLCO' => 1]];
-            
+
             if(count($fpas) != 1){
                 $fpa2 = $fpas[0]['IMPORTE'];
                 $fpa1 = $fpas[1]['IMPORTE'];
@@ -1195,8 +1195,8 @@ class TicketController extends Controller{
                             $product = "INSERT INTO F_LFA (TIPLFA,CODLFA,POSLFA,ARTLFA,DESLFA,CANLFA,PRELFA,TOTLFA) VALUES (?,?,?,?,?,?,?,?)";
                             $exec = $this->con->prepare($product);
                             $exec -> execute($ins);
-    
-    
+
+
                             $updatesto = "UPDATE F_STO SET DISSTO = DISSTO - ? , ACTSTO = ACTSTO - ? WHERE ALMSTO = 'GEN' AND ARTSTO = ?";
                             $exec = $this->con->prepare($updatesto);
                             $exec -> execute($upd);
@@ -1246,7 +1246,7 @@ class TicketController extends Controller{
                 }else{return response()->json("No hay productos ?",404);}
             }else{return response()->json("El ticket es menor o igual a 0",401);}
         }else{return response()->json('El ticket no existe',404);}
-    
+
     }
 
     public function creatVal($devolucion,$print){
