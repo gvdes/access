@@ -424,4 +424,45 @@ class ReportController extends Controller{
         ];
         return response()->json($res,200);
     }
+
+    public function getCashOrDateCard($date){
+        // return $date;
+        $select = "SELECT * FROM T_TER";
+        $exec = $this->con->prepare($select);
+        $exec->execute();
+        $terminales = $exec->fetchall(\PDO::FETCH_ASSOC);
+
+        $selpagtar = "SELECT
+        COB.TERMINAL,
+        COB.TICKET,
+        F_FAC.CNOFAC AS CLIENTE,
+        Format(F_FAC.FECFAC, 'Short Date') as FECHA,
+        Format(F_FAC.HORFAC, 'HH:MM:SS') AS HORA,
+        COB.TARJETAS
+        FROM F_FAC
+        INNER JOIN (
+        SELECT
+        T_TER.DESTER AS TERMINAL,
+        F_LCO.TFALCO&'-'&F_LCO.CFALCO AS TICKET,
+        F_LCO.FECLCO AS FECHA,
+        MAX(IIF((F_LCO.FPALCO = 'TBA' OR  F_LCO.FPALCO = 'TSC' OR F_LCO.FPALCO = 'TSA'),F_LCO.IMPLCO ,'')) AS TARJETAS
+        FROM F_LCO
+        INNER JOIN T_TER ON T_TER.CODTER = F_LCO.TERLCO
+        WHERE FECLCO =  "."#".$date."#"." AND (F_LCO.FPALCO = 'TBA' OR  F_LCO.FPALCO = 'TSC' OR F_LCO.FPALCO = 'TSA')
+        GROUP BY
+        T_TER.DESTER,
+        TFALCO&'-'&CFALCO,
+        FECLCO ) AS COB  ON COB.TICKET = F_FAC.TIPFAC&'-'&F_FAC.CODFAC";
+        $exec = $this->con->prepare($selpagtar);
+        $exec->execute();
+        $fpas = $exec->fetchall(\PDO::FETCH_ASSOC);
+        // $impresoras = $this->getPrinter();
+
+        $res = [
+            "terminales"=>mb_convert_encoding($terminales,'UTF-8'),
+            "formaspagos"=>mb_convert_encoding($fpas,'UTF-8'),
+            // "impresoras"=>$impresoras
+        ];
+        return response()->json($res,200);
+    }
 }
