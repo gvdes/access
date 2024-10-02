@@ -679,14 +679,14 @@ class ProductController extends Controller{
         $prices = $request->prices;
 
         foreach($prices as $price){
-            $updprices =   round($price["PRELTA"]);
+            $updprices =   round($price["PRELTA"] * 1.05);
             $upd = "UPDATE F_LTA SET PRELTA = $updprices WHERE ARTLTA = ? AND TARLTA = ?";
             $exec = $this->con->prepare($upd);
             $exec -> execute([$price["ARTLTA"], $price["TARLTA"]]);
 
         $insert = "INSERT INTO  F_LTA (TARLTA,ARTLTA,MARLTA,PRELTA) VALUES (?,?,?,?)";
         $exec = $this->con->prepare($insert);
-        $exec -> execute([$price["TARLTA"],$price["ARTLTA"],0,round($price["PRELTA"])]);
+        $exec -> execute([$price["TARLTA"],$price["ARTLTA"],0,round($price["PRELTA"] * 1.05)]);
         }
         // if($request->prices["TARLTA"] > 1){
 
