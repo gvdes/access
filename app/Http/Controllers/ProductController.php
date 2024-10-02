@@ -613,7 +613,7 @@ class ProductController extends Controller{
     }
     public function insertpub(request $request){
         $products =  $request->products;
-        foreach($products as $products){
+        foreach($products as $product){
             $cost = ($product["PCOART"]*1.05);
             $eanart =$product["EANART"];
             $famart =$product["FAMART"];
@@ -659,10 +659,10 @@ class ProductController extends Controller{
                                     ]);
                     $almacenes  = [
                         "GEN"=>"GEN",
-                        "DES"=>"PAN",
-                        "EMP"=>"BOL",
-                        "EXH"=>"DES",
-                        "FDT"=>"CAS"
+                        "DES"=>"DES",
+                        "EMP"=>"EMP",
+                        "EXH"=>"EXH",
+                        "FDT"=>"FDT"
 
                     ];
                     foreach($almacenes as $alm){
