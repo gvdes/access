@@ -465,4 +465,27 @@ class ReportController extends Controller{
         ];
         return response()->json($res,200);
     }
+
+    public function OpenBoxes(Request $request){
+        $fechas = $request->filt;
+        if(isset($fechas['from'])){
+            $desde = $fechas['from'];
+            $hasta = $fechas['to'];
+            $condicion = "#".$desde."#"." AND "."#".$hasta."#";
+        }else{
+            $date = $fechas;
+            $condicion = "#".$date."#"." AND "."#".$date."#";
+        }
+        $cashes = "SELECT
+        T_TER.DESTER,
+        COUNT(F_FAC.CODFAC) AS TICKETS
+        FROM F_FAC
+        INNER JOIN T_TER ON T_TER.CODTER = F_FAC.TERFAC
+        WHERE F_FAC.FECFAC BETWEEN ".$condicion.
+        "GROUP BY T_TER.DESTER";
+        $exec = $this->con->prepare($cashes);
+        $exec->execute();
+        $cashiers = $exec->fetchall(\PDO::FETCH_ASSOC);
+        return response()->json($cashiers);
+    }
 }

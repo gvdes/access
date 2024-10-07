@@ -170,4 +170,5 @@ $router->group(['prefix' => 'reports'], function () use ($router){
     $router->get('/getSales', 'ReportController@getSales');
     $router->get('/getSalesPerMonth/{month}', 'ReportController@getSalesPerMonth');
     $router->post('/filter', 'ReportController@filter');
+    $router->post('/OpenCash', 'ReportController@OpenBoxes');
 });
