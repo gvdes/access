@@ -97,7 +97,8 @@ class TicketController extends Controller{
                 if($request->serie == 9){
                     $nomter = "CAMBIOS Y DEVOLUCIONES";
                 }else{
-                    $terminal = "SELECT T_TER.*  FROM T_TER INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.DOCTER   WHERE T_DOC.TIPDOC = ".$request->serie;
+                    // $terminal = "SELECT T_TER.*  FROM T_TER INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.DOCTER   WHERE T_DOC.TIPDOC = ".$request->serie;
+                    $terminal = "SELECT T_TER.*  FROM T_TER    WHERE T_TER.CODTER = ".$tck['TERFAC'];
                     $exec = $this->con->prepare($terminal);
                     $exec->execute();
                     $codter = $exec->fetch(\PDO::FETCH_ASSOC);
@@ -296,7 +297,8 @@ class TicketController extends Controller{
             $maxcob = $exec->fetch(\PDO::FETCH_ASSOC);
             $cobro = $maxcob['maxi'] + 1;
 
-            $terminal = "SELECT T_TER.*  FROM T_TER INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.DOCTER   WHERE T_DOC.TIPDOC = ".$serie;
+            // $terminal = "SELECT T_TER.*  FROM T_TER INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.DOCTER   WHERE T_DOC.TIPDOC = ".$serie;
+            $terminal = "SELECT T_TER.*  FROM T_TER WHERE T_TER.CODTER = ".$devolucion['TERFAC'];
             $exec = $this->con->prepare($terminal);
             $exec->execute();
             $codter = $exec->fetch(\PDO::FETCH_ASSOC);
@@ -519,7 +521,8 @@ class TicketController extends Controller{
                             $products[$key]['CANLFA'] *= - 1;
                             $products[$key]['TOTLFA'] *= - 1;
                         }
-                        $terminal = "SELECT T_TER.*  FROM T_TER INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.DOCTER   WHERE T_DOC.TIPDOC = ".$serie;
+                        // $terminal = "SELECT T_TER.*  FROM T_TER INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.DOCTER   WHERE T_DOC.TIPDOC = ".$serie;
+                        $terminal = "SELECT T_TER.*  FROM T_TER  WHERE T_TER.CODTER = ".$tck['TERFAC'];
                         $exec = $this->con->prepare($terminal);
                         $exec->execute();
                         $codter = $exec->fetch(\PDO::FETCH_ASSOC);
@@ -1105,7 +1108,8 @@ class TicketController extends Controller{
                         $total += $products[$key]['_chantot'];
                     }
                     // return intval(explode("-",$ticket['ticket'])[0]);
-                    $terminal = "SELECT T_TER.*  FROM T_TER INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.DOCTER   WHERE T_DOC.TIPDOC = ".intval(explode("-",$ticket['ticket'])[0]);
+                    // $terminal = "SELECT T_TER.*  FROM T_TER INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.DOCTER   WHERE T_DOC.TIPDOC = ".intval(explode("-",$ticket['ticket'])[0]);
+                    $terminal = "SELECT T_TER.*  FROM T_TER   WHERE T_TER.CODTER = ".$tck['TERFAC'];
                     $exec = $this->con->prepare($terminal);
                     $exec->execute();
                     $codter = $exec->fetch(\PDO::FETCH_ASSOC);
@@ -1334,6 +1338,15 @@ class TicketController extends Controller{
                 return true;
             }
                 return false;
+    }
+
+    public function getCash(){
+        $terminal = "SELECT T_TER.*  FROM T_TER";
+        $exec = $this->con->prepare($terminal);
+        $exec->execute();
+        $codter = $exec->fetchall(\PDO::FETCH_ASSOC);
+        return response()->json($codter,200);
+
     }
 
 }
