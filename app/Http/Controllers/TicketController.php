@@ -122,7 +122,9 @@ class TicketController extends Controller{
                 "products"=>$products,
                 "pagos"=>$fpas,
                 "desfpa"=>isset($fpas)? ['CPTLCO'=>'CONTADO EFECTIVO', 'FPALCO'=>'EFE','IMPORTE'=>$tck['TOTFAC'] , 'ANTLCO'=>''] : $fpas[0],
-                "impresora"=>$request->print
+                // "desfpa"=>['CPTLCO'=>'CONTADO EFECTIVO', 'FPALCO'=>'EFE','IMPORTE'=>$tck['TOTFAC'] , 'ANTLCO'=>''],
+                "impresora"=>$request->print,
+                "ismodify"=>false
                 ];
                 $print = $this->printck($header);
                 if($print){
@@ -448,7 +450,8 @@ class TicketController extends Controller{
                     "products"=>$primp,
                     "pagos"=>$newFormas,
                     "desfpa"=>$newFormas[0],
-                    "impresora"=>$print
+                    "impresora"=>$print,
+                    "ismodify"=>true
                 ];
                 $print = $this->printck($header);
                 $print = $this->printck($header);
@@ -648,7 +651,8 @@ class TicketController extends Controller{
                                 "products"=>$products,
                                 "pagos"=>$fpas,
                                 "desfpa"=>$fpas[0],
-                                "impresora"=>$print
+                                "impresora"=>$print,
+                                "ismodify"=>false
                             ];
                            $print = $this->printck($header);
                            if($print){
@@ -835,7 +839,8 @@ class TicketController extends Controller{
                         // $padding = 54 - strlen($despa);
                         $printer->text(mb_convert_encoding($despa,'UTF-8'));
                         $printer->text(str_pad('',7,' '));
-                        $numbe = $pago['FPALCO'] == 'EFE' ? $pago['IMPORTE'] + $header['cambio']  : $pago['IMPORTE'];
+                        $numbe = $pago['FPALCO'] == 'EFE' &&  $header['ismodify'] ? $pago['IMPORTE'] + $header['cambio']  : $pago['IMPORTE'];
+                        // $numbe = $header['ismodify'] ? $pago['IMPORTE'] + $header['cambio']  : $pago['IMPORTE'] ;
                         $printer->text(str_pad("$".number_format($numbe,2),-13)." \n");
                     }
                     if($header['cambio'] <> 0){
