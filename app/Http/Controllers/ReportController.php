@@ -477,12 +477,13 @@ class ReportController extends Controller{
             $condicion = "#".$date."#"." AND "."#".$date."#";
         }
         $cashes = "SELECT
+        F_FAC.FECFAC,
         T_TER.DESTER,
         COUNT(F_FAC.CODFAC) AS TICKETS
         FROM F_FAC
         INNER JOIN T_TER ON T_TER.CODTER = F_FAC.TERFAC
         WHERE F_FAC.FECFAC BETWEEN ".$condicion.
-        "GROUP BY T_TER.DESTER";
+        "GROUP BY T_TER.DESTER, F_FAC.FECFAC";
         $exec = $this->con->prepare($cashes);
         $exec->execute();
         $cashiers = $exec->fetchall(\PDO::FETCH_ASSOC);
