@@ -366,7 +366,11 @@ class SalesController extends Controller{
           foreach($group as $el){
             $amount = $body["amount"] + $el["amount"];
             $total = $body["total"] + $el["total"];
-            $price = $total / $amount;
+            if ($amount != 0) {
+                $price = $total / $amount;
+            } else {
+                $price = 0; // O cualquier valor predeterminado que tenga sentido en tu lógica
+            }
 
             $body['amount'] = $amount;
             $body['price'] = $price;
