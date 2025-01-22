@@ -1354,4 +1354,157 @@ class TicketController extends Controller{
 
     }
 
+    public function getTck(Request $request){
+        $ticket = $request->serie."-".$request->folio;
+        $existck = "SELECT TIPFAC&'-'&CODFAC as ticket, CDbl(TOTFAC) as total, CNOFAC AS cliente , CLIFAC AS codcli, Format(FECFAC, 'Short Date') as fecha, OB1FAC AS observacion FROM F_FAC WHERE TIPFAC&'-'&CODFAC = "."'".$ticket."'";
+        $exec = $this->con->prepare($existck);
+        $exec->execute();
+        $tck = $exec->fetch(\PDO::FETCH_ASSOC);
+        if($tck){
+                $prd = "SELECT
+                F_ART.CODART AS codigo,
+                F_ART.EANART AS cb,
+                F_ART.CCOART AS corto,
+                F_ART.DLAART AS descripcion,
+                CInt(F_ART.UPPART) AS pxc,
+                 SUM(CInt(F_LFA.CANLFA)) AS cantidad,
+                 CDbl(F_LFA.PRELFA) AS precio,
+                 SUM(CDbl(F_LFA.TOTLFA)) AS total,
+                0 AS validate,
+                0 AS checkout,
+                0 AS diferencia,
+                0 AS conteo
+                FROM F_LFA
+                INNER JOIN F_ART ON F_ART.CODART = F_LFA.ARTLFA
+                WHERE TIPLFA&'-'&CODLFA = "."'".$ticket."'"."
+                GROUP BY
+                F_ART.CODART,
+                F_ART.EANART,
+                F_ART.CCOART,
+                F_ART.DLAART,
+                F_ART.UPPART,
+                F_LFA.PRELFA,
+                0,
+                0,
+                0,
+                0";
+                $exec = $this->con->prepare($prd);
+                $exec->execute();
+                $products = $exec->fetchall(\PDO::FETCH_ASSOC);
+
+                if($products){
+                    foreach($products as &$product){
+                        $variants = "SELECT
+                        F_EAN.ARTEAN AS codigo,
+                        F_EAN.EANEAN AS cb
+                        FROM F_EAN
+                        WHERE F_EAN.ARTEAN = "."'".$product['codigo']."'";
+                        $exec = $this->con->prepare($variants);
+                        $exec->execute();
+                        $productsvariants = $exec->fetchall(\PDO::FETCH_ASSOC);
+                        $product['variants'] =$productsvariants ?: [];
+
+                    }
+                }else{
+                    response()->json("El ticket no contiene productos",404);
+                }
+                $res = [
+                    "ticket"=>$tck,
+                    "product"=>$products
+                ];
+                return response()->json( mb_convert_encoding($res,'UTF-8'),200);
+        }else{
+            return response()->json("El ticket no existe",404);
+        }
+    }
+
+    public function PrintDiff(Request $request){
+        $printers = $request->printer;
+        $header = $request->data['head'];
+        $validproducts = $request->valid;
+        $invalidProducts = $request->invalid;
+        try{
+            $connector = new NetworkPrintConnector($printers, 9100, 3);
+            $printer = new Printer($connector);
+        }catch(\Exception $e){ return null;}
+        try {
+            try{
+                $printer->setJustification(printer::JUSTIFY_LEFT);
+                $printer->text(" \n");
+                $printer->text(" \n");
+                $printer->text("-------------------CONTEO------------------\n");
+                $printer->text(" \n");
+                $printer->text("TICKET: ".$header['ticket']."\n");
+                $printer->text("CLIENTE: ".$header['codcli']." ".$header['cliente']."\n");
+                $printer->text("FECHA: ".$header['fecha']."\n");
+                $printer->text(" \n");
+                $printer->text("_______________________________________________ \n");
+                // $printer->text("ARTICULO      CONTEO      DIFF.        TOTAL \n");
+                $printer->setJustification(printer::JUSTIFY_LEFT);
+                $text = str_pad("ARTICULO",12);
+                $text1 = str_pad("CONTEO",10);
+                $text2 = str_pad("PXC",5);
+                $text3 = str_pad("VAL.",7);
+                $text4 = str_pad("DIFF.",7);
+                $printer->text($text." ".$text1." ".$text2."  ".$text3." ".$text4." \n");
+                $printer->text("_______________________________________________ \n");
+                $printer -> setFont(Printer::FONT_B);
+                $printer->text("VALIDADOS >>>>>>>>>>>>>>>>>\n");
+                $printer->text(" \n");
+                if(count($validproducts) > 0){
+                    foreach($validproducts as $product){
+                        $printer->setJustification(printer::JUSTIFY_LEFT);
+                        $arti [] = $product['diferencia'];
+                        $printer->text(mb_convert_encoding($product['codigo'], 'UTF-8')."   ".mb_convert_encoding($product['descripcion'], 'UTF-8')." \n");
+                               $printer->setJustification(printer::JUSTIFY_RIGHT);
+                               $count = str_pad(number_format($product['conteo'],0,'.','')." cj",12);
+                               $pxc = str_pad(number_format($product['pxc'],0,'.',''),7);
+                               $checkout = str_pad(number_format($product['checkout'],0,'.','')." pz",10);
+                               $diff = str_pad(number_format($product['diferencia'],0,'.','')." pz",10);
+                               $printer->text($count." ".$pxc." ".$checkout." ".$diff." \n");
+                    }
+                }
+                $printer->setJustification(printer::JUSTIFY_LEFT);
+                $printer->text("SIN VALIDAR >>>>>>>>>>>>>>>>>\n");
+                $printer->text(" \n");
+                if($invalidProducts){
+                    foreach($invalidProducts as $product){
+                        $printer->setJustification(printer::JUSTIFY_LEFT);
+                        $arti [] = $product['diferencia'];
+                        $printer->text(mb_convert_encoding($product['codigo'], 'UTF-8')."   ".mb_convert_encoding($product['descripcion'], 'UTF-8')." \n");
+                               $printer->setJustification(printer::JUSTIFY_RIGHT);
+                               $count = str_pad(number_format($product['conteo'],0,'.','')." cj",12);
+                               $pxc = str_pad(number_format($product['pxc'],0,'.',''),7);
+                               $checkout = str_pad(number_format($product['checkout'],0,'.','')." pz",10);
+                               $diff = str_pad(number_format($product['diferencia'],0,'.','')." pz",10);
+                               $printer->text($count." ".$pxc." ".$checkout." ".$diff." \n");
+                    }
+                }
+                $printer -> setFont(Printer::FONT_A);
+                $printer->setJustification(printer::JUSTIFY_LEFT);
+                $printer->text("_______________________________________________ \n");
+                $printer->text(" \n");
+                $printer->text(" \n");
+
+                $printer->setJustification(Printer::JUSTIFY_LEFT);
+                $line = "ARTICULOS";
+                $count = count($arti); // Cantidad de artículos
+                $maxWidth = 40; // Ajusta este valor según el ancho máximo de caracteres de la impresora
+                $printer->text($line . str_repeat(' ', $maxWidth - strlen($line) - strlen($count)) . $count . "\n");
+                $printer->text(" \n");
+                $line = "DIFERENCIA";
+                $total = array_sum($arti); // Suma de las diferencias
+                $printer->text($line . str_repeat(' ', $maxWidth - strlen($line) - strlen($total)) . $total . "\n");
+                $printer->text(" \n");
+                $printer->text(" \n");
+
+                $printer -> cut();
+                $printer -> close();
+            }catch(Exception $e){}
+        } finally {
+            $printer -> close();
+            return true;
+        }
+    }
+
 }

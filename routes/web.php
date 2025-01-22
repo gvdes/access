@@ -157,6 +157,8 @@ $router->group(['prefix' => 'modify'], function () use ($router){
     $router->get('/getCash', 'TicketController@getCash');
     $router->get('/getTicket/{ticket}', 'TicketController@getTicket');
     $router->post('/newmod', 'TicketController@newMod');
+    $router->post('/getTck', 'TicketController@getTck');
+    $router->post('/PrintDiff', 'TicketController@PrintDiff');
     $router->post('/modificacion', 'TicketController@modificacion');
     $router->post('/nwtck', 'TicketController@nwtck');
     $router->post('/retirada', 'TicketController@retirada');
