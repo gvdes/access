@@ -326,32 +326,32 @@ class SalesController extends Controller{
       foreach($request->cash as $cash){
         $last_date = $request->last_date;
         $i++;
-        $clause = $clause." (TIPFAC = '".$cash['_cash']."' AND FECFAC >= #".$cash['date']."#)";
+        $clause = $clause." (TIPALB = '".$cash['_cash']."' AND FECALB >= #".$cash['date']."#)";
         if($i<count($cajas)){
           $clause = $clause." OR";
         }
       }
-      $query = "SELECT TIPFAC, CODFAC, REFFAC, FECFAC, CLIFAC, CNOFAC, FOPFAC, HORFAC, TOTFAC, AGEFAC FROM F_FAC".$clause;
+      $query = "SELECT TIPALB, CODALB, REFALB, FECALB, CLIALB, CNOALB, FOPALB, HORALB, TOTALB, AGEALB FROM F_ALB".$clause;
       $exec = $this->con->prepare($query);
       $exec->execute();
       $rows = collect($exec->fetchAll(\PDO::FETCH_ASSOC));
-      $query_body = "SELECT ARTLFA, CANLFA, PRELFA, TOTLFA, COSLFA FROM F_LFA WHERE TIPLFA = ? AND CODLFA = ?";
+      $query_body = "SELECT ARTLAL, CANLAL, PRELAL, TOTLAL, COSLAL FROM F_LAL WHERE TIPLAL = ? AND CODLAL = ?";
       $exec_body = $this->con->prepare($query_body);
       $query_paid_methods = "SELECT IMPLCO, FPALCO FROM F_LCO WHERE TFALCO = ? AND CFALCO = ?";
       $exec_paid_methods = $this->con->prepare($query_paid_methods);
       $sales = $rows->filter(function($row) use($cajas, $_cash_array){
-        $date = explode(" ",$row['FECFAC'])[0]." ".explode(" ",$row['HORFAC'])[1];
-        $index = array_search($row["TIPFAC"], $_cash_array);
+        $date = explode(" ",$row['FECALB'])[0]." ".explode(" ",$row['HORALB'])[1];
+        $index = array_search($row["TIPALB"], $_cash_array);
         return $cajas[$index]["last_date"]<$date;
       })->map(function($row) use($exec_body, $exec_paid_methods){
-        $exec_body->execute([$row['TIPFAC'], $row['CODFAC']]);
+        $exec_body->execute([$row['TIPALB'], $row['CODALB']]);
         $body = collect($exec_body->fetchAll(\PDO::FETCH_ASSOC))->map(function($row){
           return [
-            "_product" => strtoupper(mb_convert_encoding((string)$row['ARTLFA'], "UTF-8", "Windows-1252")),
-            "amount" => floatval($row['CANLFA']),
-            "price" => floatval($row['PRELFA']),
-            "total" => floatval($row['TOTLFA']),
-            "costo" => floatval(explode(" ",$row['COSLFA'])[0])
+            "_product" => strtoupper(mb_convert_encoding((string)$row['ARTLAL'], "UTF-8", "Windows-1252")),
+            "amount" => floatval($row['CANLAL']),
+            "price" => floatval($row['PRELAL']),
+            "total" => floatval($row['TOTLAL']),
+            "costo" => floatval(explode(" ",$row['COSLAL'])[0])
           ];
         })->filter(function($body){
           return $body['amount']!=0;
@@ -374,9 +374,9 @@ class SalesController extends Controller{
           }
           return $body;
         })->values()->all();
-        $date = explode(" ",$row['FECFAC'])[0]." ".explode(" ",$row['HORFAC'])[1];
-        $_paid_by = $this->getPaidMethodType($row['FOPFAC']);
-        $exec_paid_methods->execute([$row['TIPFAC'], $row['CODFAC']]);
+        $date = explode(" ",$row['FECALB'])[0]." ".explode(" ",$row['HORALB'])[1];
+        $_paid_by = $this->getPaidMethodType($row['FOPALB']);
+        $exec_paid_methods->execute([$row['TIPALB'], $row['CODALB']]);
         $paid_methods_body = collect($exec_paid_methods->fetchAll(\PDO::FETCH_ASSOC))->map(function($row){
           $_paid_by = $this->getPaidMethodType($row['FPALCO']);
           return [
@@ -385,14 +385,14 @@ class SalesController extends Controller{
           ];
         });
         return [
-          "_cash" => intval($row['TIPFAC']),
-          "ref" => mb_convert_encoding((string)$row['REFFAC'], "UTF-8", "Windows-1252"),
-          "num_ticket" => intval($row['CODFAC']),
-          "total" => floatval($row['TOTFAC']),
+          "_cash" => intval($row['TIPALB']),
+          "ref" => mb_convert_encoding((string)$row['REFALB'], "UTF-8", "Windows-1252"),
+          "num_ticket" => intval($row['CODALB']),
+          "total" => floatval($row['TOTALB']),
           "created_at" => $date,
-          "_client" => intval($row['CLIFAC']),
-          "name" => mb_convert_encoding((string)$row['CNOFAC'], "UTF-8", "Windows-1252"),
-          "_seller" => intval($row["AGEFAC"]),
+          "_client" => intval($row['CLIALB']),
+          "name" => mb_convert_encoding((string)$row['CNOALB'], "UTF-8", "Windows-1252"),
+          "_seller" => intval($row["AGEALB"]),
           "_paid_by" => $_paid_by,
           "body" => $body,
           "paidMethod" => $paid_methods_body
