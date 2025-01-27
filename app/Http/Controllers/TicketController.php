@@ -1421,25 +1421,38 @@ class TicketController extends Controller{
     public function PrintDiff(Request $request){
         $printers = $request->printer;
         $header = $request->data['head'];
-        $validproducts = $request->valid;
-        $invalidProducts = $request->invalid;
+        $validproducts = count($request->valid) > 0 ? $this->Print($printers,$request->valid,$header,'Validados') : null ;
+        $invalidProducts = count($request->invalid) > 0 ? $this->Print($printers,$request->invalid,$header,'Faltantes Por Validar') : null ;
+        $diff = count($request->diff) > 0 ? $this->Print($printers,$request->diff,$header,'-Diferencias') : null ;
+        return $validproducts;
+    }
+
+    public function Print($printers, $products, $header,$enc){
         try{
             $connector = new NetworkPrintConnector($printers, 9100, 3);
             $printer = new Printer($connector);
         }catch(\Exception $e){ return null;}
         try {
             try{
+                $printer->setJustification(printer::JUSTIFY_CENTER);
+                $printer->text(" \n");
+                $printer->text(" \n");
+                $printer->setJustification(Printer::JUSTIFY_CENTER);
+                $printer->setReverseColors(true);
+                $printer->setEmphasis(true);
+                $printer->setTextSize(2,2);
+                $printer->text($enc);
+                $printer->text("\n");
+                $printer->setReverseColors(false);
+                $printer->setEmphasis(false);
+                $printer->setTextSize(1,1);
+                $printer->text(" \n");
                 $printer->setJustification(printer::JUSTIFY_LEFT);
-                $printer->text(" \n");
-                $printer->text(" \n");
-                $printer->text("-------------------CONTEO------------------\n");
-                $printer->text(" \n");
                 $printer->text("TICKET: ".$header['ticket']."\n");
                 $printer->text("CLIENTE: ".$header['codcli']." ".$header['cliente']."\n");
                 $printer->text("FECHA: ".$header['fecha']."\n");
                 $printer->text(" \n");
                 $printer->text("_______________________________________________ \n");
-                // $printer->text("ARTICULO      CONTEO      DIFF.        TOTAL \n");
                 $printer->setJustification(printer::JUSTIFY_LEFT);
                 $text = str_pad("ARTICULO",12);
                 $text1 = str_pad("CONTEO",10);
@@ -1449,28 +1462,12 @@ class TicketController extends Controller{
                 $printer->text($text." ".$text1." ".$text2."  ".$text3." ".$text4." \n");
                 $printer->text("_______________________________________________ \n");
                 $printer -> setFont(Printer::FONT_B);
-                $printer->text("VALIDADOS >>>>>>>>>>>>>>>>>\n");
                 $printer->text(" \n");
-                if(count($validproducts) > 0){
-                    foreach($validproducts as $product){
+                if(count($products) > 0){
+                    foreach($products as $product){
                         $printer->setJustification(printer::JUSTIFY_LEFT);
                         $arti [] = $product['diferencia'];
-                        $printer->text(mb_convert_encoding($product['codigo'], 'UTF-8')."   ".mb_convert_encoding($product['descripcion'], 'UTF-8')." \n");
-                               $printer->setJustification(printer::JUSTIFY_RIGHT);
-                               $count = str_pad(number_format($product['conteo'],0,'.','')." cj",12);
-                               $pxc = str_pad(number_format($product['pxc'],0,'.',''),7);
-                               $checkout = str_pad(number_format($product['checkout'],0,'.','')." pz",10);
-                               $diff = str_pad(number_format($product['diferencia'],0,'.','')." pz",10);
-                               $printer->text($count." ".$pxc." ".$checkout." ".$diff." \n");
-                    }
-                }
-                $printer->setJustification(printer::JUSTIFY_LEFT);
-                $printer->text("SIN VALIDAR >>>>>>>>>>>>>>>>>\n");
-                $printer->text(" \n");
-                if($invalidProducts){
-                    foreach($invalidProducts as $product){
-                        $printer->setJustification(printer::JUSTIFY_LEFT);
-                        $arti [] = $product['diferencia'];
+                        $cajas [] = $product['conteo'];
                         $printer->text(mb_convert_encoding($product['codigo'], 'UTF-8')."   ".mb_convert_encoding($product['descripcion'], 'UTF-8')." \n");
                                $printer->setJustification(printer::JUSTIFY_RIGHT);
                                $count = str_pad(number_format($product['conteo'],0,'.','')." cj",12);
@@ -1494,10 +1491,13 @@ class TicketController extends Controller{
                 $printer->text(" \n");
                 $line = "DIFERENCIA";
                 $total = array_sum($arti); // Suma de las diferencias
-                $printer->text($line . str_repeat(' ', $maxWidth - strlen($line) - strlen($total)) . $total . "\n");
+                $printer->text($line . str_repeat(' ', $maxWidth - strlen($line) - strlen($total)) . $total ." pzs". "\n");
+                $printer->text(" \n");
+                $line = "CAJAS VALIDADAS";
+                $totcj = array_sum($cajas); // Suma de las diferencias
+                $printer->text($line . str_repeat(' ', $maxWidth - strlen($line) - strlen($totcj)) . $totcj ." cjs". "\n");
                 $printer->text(" \n");
                 $printer->text(" \n");
-
                 $printer -> cut();
                 $printer -> close();
             }catch(Exception $e){}
