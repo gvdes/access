@@ -489,4 +489,54 @@ class ReportController extends Controller{
         $cashiers = $exec->fetchall(\PDO::FETCH_ASSOC);
         return response()->json($cashiers);
     }
+
+    public function getCashCob(Request $request){
+        $fechas = $request->all();
+        // return $fechas;
+        if(isset($fechas['filt']['from'])){
+            $desde = $fechas['filt']['from'];
+            $hasta = $fechas['filt']['to'];
+            $condicion = "#".$desde."#"." AND "."#".$hasta."#";
+        }else{
+            $date = $fechas['filt'];
+            $condicion = "#".$date."#"." AND "."#".$date."#";
+        }
+
+        $selpagtar = "SELECT
+        COB.TERMINAL,
+        COB.TICKET,
+        F_FAC.CNOFAC AS CLIENTE,
+        Format(F_FAC.FECFAC, 'Short Date') as FECHA,
+        Format(F_FAC.HORFAC, 'HH:MM:SS') AS HORA,
+        COB.FOP AS FORMA_PAGO,
+        COB.IMPORT AS IMPORTE
+        FROM F_FAC
+        INNER JOIN (
+        SELECT
+        T_TER.DESTER AS TERMINAL,
+        F_LCO.TFALCO&'-'&F_LCO.CFALCO AS TICKET,
+        F_LCO.FECLCO AS FECHA,
+        F_FPA.DESFPA AS FOP,
+        F_LCO.IMPLCO AS IMPORT
+        FROM ((F_LCO
+        INNER JOIN T_TER ON T_TER.CODTER = F_LCO.TERLCO)
+        INNER JOIN F_FPA ON F_FPA.CODFPA  = F_LCO.FPALCO)
+        WHERE FECLCO BETWEEN ".$condicion." ) AS COB  ON COB.TICKET = F_FAC.TIPFAC&'-'&F_FAC.CODFAC";
+        $exec = $this->con->prepare($selpagtar);
+        $exec->execute();
+        $fpas = $exec->fetchall(\PDO::FETCH_ASSOC);
+
+
+        $getOpts = "SELECT DESFPA FROM F_FPA WHERE UETFPA = 1";
+        $exec = $this->con->prepare($getOpts);
+        $exec->execute();
+        $forms  = $exec->fetchall(\PDO::FETCH_ASSOC);
+
+
+        $res = [
+            "formaspagos"=>mb_convert_encoding($fpas,'UTF-8'),
+            "formas"=>mb_convert_encoding($forms,'UTF-8'),
+        ];
+        return response()->json($res,200);
+    }
 }
