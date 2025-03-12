@@ -161,6 +161,10 @@ $router->group(['prefix' => 'modify'], function () use ($router){
     $router->post('/PrintDiff', 'TicketController@PrintDiff');
     $router->post('/modificacion', 'TicketController@modificacion');
     $router->post('/nwtck', 'TicketController@nwtck');
+
+    $router->post('/createTicket', 'TicketController@createTicket');
+
+
     $router->post('/retirada', 'TicketController@retirada');
     $router->post('/createVal', 'TicketController@CreateVale');
 
@@ -169,6 +173,8 @@ $router->group(['prefix' => 'modify'], function () use ($router){
 $router->group(['prefix' => 'reports'], function () use ($router){
     $router->get('/getCash', 'ReportController@getCash');
     $router->get('/getCashCard', 'ReportController@getCashCard');
+
+    $router->get('/getTerminal', 'ReportController@getTerminal');
 
     $router->get('/getCashCard/{date}', 'ReportController@getCashOrDateCard');
     $router->get('/getSales', 'ReportController@getSales');

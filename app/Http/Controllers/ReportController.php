@@ -539,4 +539,14 @@ class ReportController extends Controller{
         ];
         return response()->json($res,200);
     }
+
+    public function getTerminal(){
+        $select = "SELECT * FROM T_TER";
+        $exec = $this->con->prepare($select);
+        $exec->execute();
+        $terminales = $exec->fetchall(\PDO::FETCH_ASSOC);
+
+        return response()->json($terminales, 200);
+    }
+
 }
