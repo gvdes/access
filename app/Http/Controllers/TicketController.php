@@ -1896,14 +1896,10 @@ class TicketController extends Controller{
         $fpaval = $fpa['DIG']['val'];//valor de pago en caso de ser digital
         $pago = [];//contenedor de pago
         $rescam = $request->cambio;
+        $efeIndex = null;
         $total = array_reduce($products, function($carry, $item) {
             return $carry + $item['amount'] * $item['price']['pivot']['price'];
         }, 0);
-
-
-
-
-
 
         foreach ($fpa as $index => $forma) {
             if (is_array($forma) && isset($forma['id']) && isset($forma['id']['desc']) && isset($forma['id']['id']) && isset($forma['val'])) {
@@ -1913,7 +1909,6 @@ class TicketController extends Controller{
             }
         }
         }
-
         if ($efeIndex !== null) {
             $forma = $fpa[$efeIndex];
             $desc = $forma['id']['desc'];
