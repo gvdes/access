@@ -1968,7 +1968,7 @@ class TicketController extends Controller{
             // $terminal = "SELECT T_TER.*  FROM T_TER INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.DOCTER   WHERE T_DOC.TIPDOC = ".$serie;
             $termi = "SELECT *
             FROM T_TER
-            INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.CODTER
+            INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.DOCTER
             WHERE CODTER = ". $terminal['CODTER'];
             $exec = $this->con->prepare($termi);
             $exec->execute();
