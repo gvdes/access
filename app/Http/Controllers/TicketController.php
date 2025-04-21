@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Mike42\Escpos\EscposImage;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
-// use NumberFormatter;
+use NumberFormatter;
 
 
 class TicketController extends Controller{
