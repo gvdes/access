@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Mike42\Escpos\EscposImage;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
-
+// use NumberFormatter;
 
 
 class TicketController extends Controller{
@@ -111,6 +111,14 @@ class TicketController extends Controller{
 
 
 
+                $formatter = new NumberFormatter("es", NumberFormatter::SPELLOUT);
+                $partes = explode('.', number_format($tck['TOTFAC'], 2, '.', ''));
+                $pesos = (int)$partes[0];
+                // $centavos = (int)$partes[1];
+                $letrasPesos = ucfirst($formatter->format($pesos));
+                // $letrasCentavos = $formatter->format($centavos);
+                $totlet = "$letrasPesos pesos M.N.";
+
                 $header = [
                 "terminal"=>$nomter,
                 "ticket"=>$request->serie."-".str_pad($request->folio,6,0,STR_PAD_LEFT),
@@ -121,6 +129,7 @@ class TicketController extends Controller{
                 "nose"=>$tck['CPRFAC'],
                 "dependiente"=>$tck['DEPFAC'],//nombre
                 "total"=>$tck['TOTFAC'],
+                 "totalLetra"=>$totlet,
                 "observacion"=>$tck['OB1FAC'],
                 "cambio"=>$tck['CAMFAC'],
                 "products"=>$products,
@@ -439,6 +448,18 @@ class TicketController extends Controller{
                     }
 
                 }
+
+                $formatter = new NumberFormatter("es", NumberFormatter::SPELLOUT);
+                $partes = explode('.', number_format($total, 2, '.', ''));
+                $pesos = (int)$partes[0];
+                // $centavos = (int)$partes[1];
+                $letrasPesos = ucfirst($formatter->format($pesos));
+                // $letrasCentavos = $formatter->format($centavos);
+                $totlet = "$letrasPesos pesos M.N.";
+
+
+
+
                 $header = [
                     "terminal"=>$nomter,
                     "ticket"=>$serie."-".str_pad($codigo,6,0,STR_PAD_LEFT),
@@ -449,6 +470,7 @@ class TicketController extends Controller{
                     "nose"=>$ncli['PROCLI'],
                     "dependiente"=>$create,
                     "total"=>$total,
+                    "totalLetra"=>$totlet,
                     "observacion"=>"Modificacion de el ticket ".$tckdev,
                     "cambio"=>$cambio,
                     "products"=>$primp,
@@ -640,6 +662,15 @@ class TicketController extends Controller{
                                 $cobro++;
 
                             }
+
+                            $formatter = new NumberFormatter("es", NumberFormatter::SPELLOUT);
+                            $partes = explode('.', number_format($tck['TOTFAC'], 2, '.', ''));
+                            $pesos = (int)$partes[0];
+                            // $centavos = (int)$partes[1];
+                            $letrasPesos = ucfirst($formatter->format($pesos));
+                            // $letrasCentavos = $formatter->format($centavos);
+                            $totlet = "$letrasPesos pesos M.N.";
+
                             $header = [
                                 "terminal"=>"CAMBIOS Y DEVOLUCIONES",
                                 "ticket"=>"9-".str_pad($codigo,6,0,STR_PAD_LEFT),
@@ -650,6 +681,7 @@ class TicketController extends Controller{
                                 "nose"=>$tck['CPRFAC'],
                                 "dependiente"=>$creacion,
                                 "total"=>$total,
+                                "totalLetra"=>$totlet,
                                 "observacion"=>"Devolucion del TICKET => ".$ticket,
                                 "cambio"=>0,
                                 "products"=>$products,
@@ -781,7 +813,12 @@ class TicketController extends Controller{
         $sql = "SELECT CTT1TPV, CTT2TPV, CTT3TPV, CTT4TPV, CTT5TPV, PTT1TPV, PTT2TPV, PTT3TPV, PTT4TPV, PTT5TPV, PTT6TPV, PTT7TPV, PTT8TPV FROM T_TPV WHERE CODTPV = $documento";
         $exec = $this->con->prepare($sql);
         $exec->execute();
-        $text = $exec->fetch(\PDO::FETCH_ASSOC);//OK
+        $text = $exec->fetch(\PDO::FETCH_ASSOC);//OK\
+
+        $dep = "SELECT CODDEP, NOMDEP FROM T_DEP WHERE CODDEP = ".$header['dependiente'];
+        $exec = $this->con->prepare($dep);
+        $exec->execute();
+        $depe = $exec->fetch(\PDO::FETCH_ASSOC);//OK
         try{
             $connector = new NetworkPrintConnector($printers, 9100, 3);
             $printer = new Printer($connector);
@@ -803,7 +840,10 @@ class TicketController extends Controller{
                     $printer->text($text["CTT1TPV"]."\n");
                     $printer->text($text["CTT2TPV"]." \n");
                     $printer->text($text["CTT3TPV"]." \n");
+                    // $printer->selectPrintMode(Printer::MODE_FONT_B);
                     $printer->text($text["CTT4TPV"]." \n");
+                    // $printer->text("JALAPA ECATEPEC EDO MEX"." \n");
+                    // $printer->selectPrintMode(Printer::MODE_FONT_A);
                     $printer->text($text["CTT5TPV"]." \n");
                     $printer->text(" \n");
                     $printer->text(" \n");
@@ -837,6 +877,7 @@ class TicketController extends Controller{
                     $printer->text(str_pad("TOTAL: ",13));
                     $printer->text("$".number_format($header["total"],2)." \n");
                     $printer->text(" \n");
+
                     $printer->setEmphasis(false);
                     foreach($header['pagos'] as $pago){
                         $despa = $pago['FPALCO'] == 'EFE' ? "Efectivo:" : $pago['CPTLCO'].":";
@@ -851,11 +892,13 @@ class TicketController extends Controller{
                         $printer->text(str_pad("Cambio: ",14));
                         $printer->text("$".number_format($header['cambio'],2)." \n");
                     }
+                    $printer->text($header["totalLetra"]." \n");
+                    $printer->text(" \n");
                     $printer->setJustification(printer::JUSTIFY_LEFT);
                     $printer->text(" \n");
                     $printer->text("N Articulos: ".array_sum($arti)." \n");
                     $printer->text(" \n");
-                    $printer->text("Le atendio :".$header["dependiente"]." \n");
+                    $printer->text("Le atendio :".$depe['NOMDEP']." \n");
                     $printer->text(" \n");
                     $printer->text($header["observacion"]." \n");
                     $printer->text("-------------------Grupo-Vizcarra---------------"." \n");
@@ -1217,6 +1260,16 @@ class TicketController extends Controller{
 
 
                         }
+
+                        $formatter = new NumberFormatter("es", NumberFormatter::SPELLOUT);
+                        $partes = explode('.', number_format($total, 2, '.', ''));
+                        $pesos = (int)$partes[0];
+                        // $centavos = (int)$partes[1];
+                        $letrasPesos = ucfirst($formatter->format($pesos));
+                        // $letrasCentavos = $formatter->format($centavos);
+                        $totlet = "$letrasPesos pesos M.N.";
+
+
                         $header = [
                             "terminal"=>"CAMBIOS Y DEVOLUCIONES",
                             "ticket"=>"9-".str_pad($codigo,6,0,STR_PAD_LEFT),
@@ -1227,6 +1280,7 @@ class TicketController extends Controller{
                             "nose"=>$tck['CPRFAC'],
                             "dependiente"=>$creacion,
                             "total"=>$total,
+                            "totalLetra"=>$totlet,
                             "observacion"=>"Vale creado del TICKET => ".$ticket['ticket'],
                             "cambio"=>$total * -1,
                             "products"=>$nwproducts,
@@ -1511,373 +1565,6 @@ class TicketController extends Controller{
         }
     }
 
-    // public function createTicket(Request $request){
-    //     $date_format = Carbon::now()->format('d/m/Y');//formato fecha factusol
-    //     $year = Carbon::now()->format('Y');//ano de ejercicio
-    //     $idano = Carbon::now()->format('ymd');//complemento para id de tpvsol
-    //     $date = date("Y/m/d H:i");//horario para la hora
-    //     $hour = "01/01/1900 ".explode(" ", $date)[1];//hora para el ticket
-    //     $horad = explode(" ", $date)[1];
-    //     $terminal = $request->terminal;
-    //     $products = $request->productos;
-    //     $fpa = $request->modes;//formas de pago
-    //     $create = $request->by;
-    //     $printer = $request->impresoras;
-    //     $efectivo = $fpa['EFE'];//valor de efectivo
-    //     $fpaid = $fpa['DIG']['id'];//id de pago en caso de ser digital
-    //     $fpaval = $fpa['DIG']['val'];//valor de pago en caso de ser digital
-    //     $pago = [];//contenedor de pago
-    //     if(($fpaid == null) && ($fpaval > 0)){
-    //         $res = [
-    //             "message"=>"No se envio una terminal"
-    //         ];
-    //         return response()->json($res,401);
-    //     }
-
-
-    //         $terminal = "SELECT *
-    //         FROM T_TER
-    //         INNER JOIN T_DOC ON T_DOC.CODDOC = T_TER.CODTER
-    //         WHERE CODTER = ". $terminal['CODTER'];
-    //         $exec = $this->con->prepare($terminal);
-    //         $exec->execute();
-    //         $codter = $exec->fetch(\PDO::FETCH_ASSOC);
-    //         $nomter = $codter['DESTER'];
-    //         $idterminal = str_pad($codter['CODTER'], 4, "0", STR_PAD_LEFT)."00".$idano;
-
-    //         $cobmax = "SELECT MAX(CODCOB) as maxi FROM F_COB";
-    //         $exec = $this->con->prepare($cobmax);
-    //         $exec->execute();
-    //         $maxcob = $exec->fetch(\PDO::FETCH_ASSOC);
-    //         $cobro = $maxcob['maxi'] + 1;
-
-    //         $codmax = "SELECT MAX(CODFAC) as maxi FROM F_FAC WHERE TIPFAC = "."'".$codter['TIPDOC']."'";
-    //         $exec = $this->con->prepare($codmax);
-    //         $exec->execute();
-    //         $max = $exec->fetch(\PDO::FETCH_ASSOC);
-    //         $codigo = $max['maxi'] + 1;
-
-
-    //         $cli = "SELECT * FROM F_CLI WHERE CODCLI = 1";
-    //         $exec = $this->con->prepare($cli);
-    //         $exec->execute();
-    //         $cliente = $exec->fetch(\PDO::FETCH_ASSOC);
-
-
-
-    //         $total = array_reduce($products, function($carry, $item) {
-    //             return $carry + $item['amount'] * $item['price']['pivot']['price'];
-    //         }, 0);
-
-
-
-
-    //         $contador = 1;
-
-    //         if(($efectivo > 0) && ($fpaval == 0 )){
-    //             $pago = [["EFE"=>$efectivo]];
-    //         }elseif(($fpaval > 0) && ($efectivo == 0)){
-    //             $pago = [[$fpaid=>$fpaval]];
-    //         }elseif(($fpaval > 0) && ($efectivo > 0)){
-    //             $pago = [
-    //                 [$fpaid['id']=>$fpaval],
-    //                 ["EFE"=>$efectivo['val']]
-    //             ];
-    //         }else{
-    //             $res = [
-    //                 "message"=>"Imposible crear ticket (Pagos en 0)",
-    //             ];
-    //             return response()->json($res,401);
-    //         }
-
-
-    //         if(count($pago) == 2){
-    //             $twopay = $pago[0][$fpaid['id']];
-    //             $payment = $pago[1]['EFE'];
-
-
-    //             $fpacod = implode(",",array_keys($pago[1]));
-
-    //             $cambio = round(($payment + $twopay) - $total,2);
-
-
-    //             if($payment > $total){
-    //                 $pago[1]['EFE'] = $total - $twopay;
-    //             }
-    //             if($cambio < 0){
-    //                 $res = [
-    //                     "message"=>"faltante de cobro, favor de completar el monto "
-    //                 ];
-    //                 return response()->json($res,401);
-    //             }
-
-    //             $column = ["TIPFAC",
-    //                 "CODFAC",
-    //                 "REFFAC",
-    //                 "FECFAC",
-    //                 "ALMFAC",
-    //                 "AGEFAC",
-    //                 "CLIFAC",
-    //                 "CNOFAC",
-    //                 "CDOFAC",
-    //                 "CPOFAC",
-    //                 "CCPFAC",
-    //                 "CPRFAC",
-    //                 "TELFAC",
-    //                 "NET1FAC",
-    //                 "BAS1FAC",
-    //                 "TOTFAC",
-    //                 "FOPFAC",
-    //                 "OB1FAC",
-    //                 "VENFAC",
-    //                 "HORFAC",
-    //                 "USUFAC",
-    //                 "USMFAC",
-    //                 "TIVA2FAC",
-    //                 "TIVA3FAC",
-    //                 "EDRFAC",
-    //                 "FUMFAC",
-    //                 "BCOFAC",
-    //                 "TPVIDFAC",
-    //                 "ESTFAC",
-    //                 "TERFAC",
-    //                 "DEPFAC",
-    //                 "EFEFAC",
-    //                 "CAMFAC",
-    //                 "EFSFAC"
-    //             ];
-
-    //             $factura = [
-    //                 $codter['TIPDOC'],
-    //                 $codigo,
-    //                 '',
-    //                 $date_format,
-    //                 "GEN",
-    //                 140,
-    //                 $cliente['CODCLI'],
-    //                 $cliente['NOFCLI'],
-    //                 $cliente['DOMCLI'],
-    //                 $cliente['POBCLI'],
-    //                 $cliente['CPOCLI'],
-    //                 $cliente['PROCLI'],
-    //                 $cliente['TELCLI'],
-    //                 $total,
-    //                 $total,
-    //                 $total,
-    //                 $fpacod,
-    //                 'Productos de Oferta',
-    //                 $date_format,
-    //                 $hour,
-    //                 27,
-    //                 27,
-    //                 1,
-    //                 2,
-    //                 $year,
-    //                 $date_format,
-    //                 1,
-    //                 $idterminal,
-    //                 2,
-    //                 $codter['CODTER'],
-    //                 140,
-    //                 $payment,
-    //                 $cambio,
-    //                 $twopay
-    //             ];
-    //             // $header = [
-    //             //     "terminal"=>$nomter,
-    //             //     "fecha"=>$date_format,
-    //             //     "hora"=>$horad,
-    //             //     "nomcli"=>$cliente['NOFCLI'],
-    //             //     "direccion"=>$cliente['DOMCLI']." ".$cliente['CPOCLI'],
-    //             //     "nose"=>$cliente['PROCLI'],
-    //             //     "dependiente"=>$create,
-    //             //     "total"=>$total,
-    //             //     "observacion"=>'Producto de Oferta',
-    //             //     "cambio"=>$cambio
-    //             // ];
-    //             $header = [
-    //                 "terminal"=>$nomter,
-    //                 "fecha"=>$date_format,
-    //                 "hora"=>$horad,
-    //                 "nomcli"=>$cliente['NOFCLI'],
-    //                 "direccion"=>$cliente['DOMCLI']." ".$cliente['CPOCLI'],
-    //                 "nose"=>$cliente['PROCLI'],
-    //                 "dependiente"=>$create,
-    //                 "total"=>$total,
-    //                 "observacion"=>"Productos de oferta",
-    //                 "cambio"=>$cambio,
-    //                 "products"=>$products,
-    //                 "pagos"=>$pago,
-    //                 "desfpa"=>$pago[0],
-    //                 "impresora"=>$printer['ip_address'],
-    //                 "ismodify"=>false
-    //             ];
-    //         }else{
-    //             $fpafin = array_keys($pago[0]);
-    //             $fpacod = implode(",",array_keys($pago[0]));
-    //             if($fpafin == ["EFE"]){
-    //                 $payment = $pago[0]['EFE'];
-    //                 $cambio = round($payment  - $total , 2);
-    //                 if($payment > $total){
-    //                     $pago[0]['EFE'] = $total;
-    //                 }
-    //             }else{
-    //                 $payment = $pago[0][$fpaid];
-    //                 $cambio = round($payment - $total,2);
-    //             }
-    //             if($cambio < 0){
-    //                 return response("faltante de cobro, favor de completar el monto",401);
-    //             }
-    //             $column = ["TIPFAC","CODFAC","REFFAC", "FECFAC", "ALMFAC", "AGEFAC", "CLIFAC", "CNOFAC", "CDOFAC", "CPOFAC", "CCPFAC", "CPRFAC", "TELFAC", "NET1FAC", "BAS1FAC", "TOTFAC", "FOPFAC", "OB1FAC", "VENFAC", "HORFAC", "USUFAC", "USMFAC", "TIVA2FAC", "TIVA3FAC", "EDRFAC", "FUMFAC", "BCOFAC",  "TPVIDFAC",  "ESTFAC",  "TERFAC",  "DEPFAC",  "EFEFAC",  "CAMFAC"];
-    //             $factura = [
-    //                 "1",
-    //                 $codigo,
-    //                 "IVATCK-".$ticket,
-    //                 $date_format,
-    //                 "GEN",
-    //                 $fil['AGEFAC'],
-    //                 $fil['CLIFAC'],
-    //                 $fil['CNOFAC'],
-    //                 $fil['CDOFAC'],
-    //                 $fil['CPOFAC'],
-    //                 $fil['CCPFAC'],
-    //                 $fil['CPRFAC'],
-    //                 $fil['TELFAC'],
-    //                 $total,
-    //                 $total,
-    //                 $total,
-    //                 $fpacod,
-    //                 "Impuesto al valor agregado del ticket ".$ticket." creado por ".$create,
-    //                 $date_format,
-    //                 $hour,
-    //                 27,
-    //                 27,
-    //                 1,
-    //                 2,
-    //                 $year,
-    //                 $date_format,
-    //                 1,
-    //                 $idterminal,
-    //                 2,
-    //                 $codter['CODTER'],
-    //                 $fil['DEPFAC'],
-    //                 $payment,
-    //                 $cambio,
-    //             ];
-
-    //             $header = [
-    //                 "terminal"=>$nomter,
-    //                 "fecha"=>$date_format,
-    //                 "hora"=>$horad,
-    //                 "nomcli"=>$fil['CNOFAC'],
-    //                 "direccion"=>$fil['CDOFAC']." ".$fil['CPOFAC'],
-    //                 "nose"=>$fil['CPRFAC'],
-    //                 "dependiente"=>$create,
-    //                 "total"=>$total,
-    //                 "observacion"=>$ticket,
-    //                 "cambio"=>$cambio
-    //             ];
-    //         }
-
-    //         $impcol = implode(",",$column);
-    //         $signos = implode(",",array_fill(0, count($column),'?'));
-
-    //         $sql = "INSERT INTO F_FAC ($impcol) VALUES ($signos)";//se crea el query para insertar en la tabla
-    //         $exec = $this->con->prepare($sql);
-    //         $exec -> execute($factura);
-
-    //         $folio = $codter['TIPDOC']."-".str_pad($codigo, 6, "0", STR_PAD_LEFT);//se obtiene el folio de la factura
-    //         $header['ticket'] = $folio;
-    //         // return $products;
-
-    //         $contap = 1;
-    //         foreach($products as $product){
-    //             $primp [] = [
-    //                 "ARTLFA"=>$product['code'],
-    //                 "DESLFA"=>$product['description'],
-    //                 "CANLFA"=>$product['amount'],
-    //                 "PRELFA"=>$product['price']['pivot']['price'],
-    //                 "TOTLFA"=>$product['price']['pivot']['price'] * $product['amount'],
-    //             ];
-    //             $upd = [
-    //                 $product['amount'],
-    //                 $product['amount'],
-    //                 $product['code'],
-    //             ];
-
-    //             $inspro = [
-    //                 $codter['TIPDOC'],
-    //                 $codigo,
-    //                 $contap,
-    //                 $product['code'],
-    //                 $product['description'],
-    //                 intval($product['amount']),
-    //                 doubleval($product['price']['pivot']['price']),
-    //                 doubleval($product['price']['pivot']['price'] * $product['amount']),
-    //                 $product['cost']
-    //             ];
-
-    //             $insertapro = "INSERT INTO F_LFA (TIPLFA,CODLFA,POSLFA,ARTLFA,DESLFA,CANLFA,PRELFA,TOTLFA,COSLFA) VALUES(?,?,?,?,?,?,?,?,?)";
-    //             $exec = $this->con->prepare($insertapro);
-    //             $exec->execute($inspro);
-
-    //             $updatesto = "UPDATE F_STO SET DISSTO = DISSTO - ? , ACTSTO = ACTSTO - ? WHERE ALMSTO = 'GEN' AND ARTSTO = ?";
-    //             $exec = $this->con->prepare($updatesto);
-    //             $exec -> execute($upd);
-    //             $contap++;
-    //         }
-
-    //         foreach($pago as $row){
-
-    //             $codfpa = implode(array_keys($row));
-    //             $valfpa = implode(array_values($row));
-
-    //             $cobcod = "SELECT *  FROM F_FPA WHERE CODFPA ="."'".$codfpa."'";
-    //             $exec = $this->con->prepare($cobcod);
-    //             $exec->execute();
-    //             $codigocobro = $exec->fetch(\PDO::FETCH_ASSOC);
-
-    //             $faclco = "INSERT INTO F_LCO (TFALCO,CFALCO,LINLCO,FECLCO,IMPLCO,CPTLCO,FPALCO,MULLCO,TPVIDLCO,TERLCO) VALUES (?,?,?,?,?,?,?,?,?,?) ";
-    //             $exec = $this->con->prepare($faclco);
-    //             $exec->execute([1,$codigo,$contador,$date_format,$valfpa,$codigocobro['DESFPA'],$codfpa,$cobro,$idterminal,$codter['CODTER']]);
-
-    //             $inscob = "INSERT INTO F_COB (CODCOB,FECCOB,IMPCOB,CPTCOB) VALUES (?,?,?,?)";
-    //             $exec = $this->con->prepare($inscob);
-    //             $exec->execute([$cobro,$date_format,$valfpa,$codigocobro['DESFPA']]);
-    //             $cobro++;
-    //             $contador++;
-    //             if($codfpa == 'EFE'){
-    //                 $valfpa  = $payment;
-    //             }
-    //             $pagoenv[] = [
-    //                 $codigocobro['DESFPA']=>$valfpa
-    //             ];
-    //         }
-
-    //         $header['desfpa'] = $codigocobro['DESFPA'];
-    //         $header['tipfpa']   = $pagoenv;
-    //         // return $header;
-
-    //         $impresion = $this->printck($header);
-    //         return $impresion;
-    //         if($impresion == null){
-    //             $impresion = false;
-    //         }else{
-    //             $impresion = true;
-    //         }
-    //         $res = [
-    //             "ticket"=>$folio,
-    //             "ivaPagado"=>$total,
-    //             "cambio"=>$cambio,
-    //             "printed"=>$impresion
-    //         ];
-
-    //         return response()->json($res,200);
-
-    // }
-
-
-
     public function createTicket(Request $request){
 
         $date_format = Carbon::now()->format('d/m/Y');//formato fecha factusol
@@ -2093,6 +1780,15 @@ class TicketController extends Controller{
                     }
 
                 }
+
+                $formatter = new NumberFormatter("es", NumberFormatter::SPELLOUT);
+                $partes = explode('.', number_format($total, 2, '.', ''));
+                $pesos = (int)$partes[0];
+                // $centavos = (int)$partes[1];
+                $letrasPesos = ucfirst($formatter->format($pesos));
+                // $letrasCentavos = $formatter->format($centavos);
+                $totlet = "$letrasPesos pesos M.N.";
+
                 $header = [
                     "terminal"=>$nomter,
                     "ticket"=>$codter['TIPDOC']."-".str_pad($codigo,6,0,STR_PAD_LEFT),
@@ -2103,6 +1799,7 @@ class TicketController extends Controller{
                     "nose"=>$ncli['PROCLI'],
                     "dependiente"=>$create,
                     "total"=>$total,
+                    "totalLetra"=>$totlet,
                     "observacion"=>"Productos de oferta",
                     "cambio"=>$request->cambio,
                     "products"=>$primp,
