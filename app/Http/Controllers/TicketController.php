@@ -837,13 +837,14 @@ class TicketController extends Controller{
                     $printer->text(" \n");
                     $printer->text("------------------------------------------------\n");
                     $printer->text(" \n");
+                    $printer->selectPrintMode(Printer::MODE_FONT_B);
                     $printer->text($text["CTT1TPV"]."\n");
+                    $printer->selectPrintMode(Printer::MODE_FONT_A);
                     $printer->text($text["CTT2TPV"]." \n");
                     $printer->text($text["CTT3TPV"]." \n");
                     // $printer->selectPrintMode(Printer::MODE_FONT_B);
                     $printer->text($text["CTT4TPV"]." \n");
                     // $printer->text("JALAPA ECATEPEC EDO MEX"." \n");
-                    // $printer->selectPrintMode(Printer::MODE_FONT_A);
                     $printer->text($text["CTT5TPV"]." \n");
                     $printer->text(" \n");
                     $printer->text(" \n");
