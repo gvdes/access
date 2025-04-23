@@ -1776,6 +1776,17 @@ class TicketController extends Controller{
                         $faclco = "INSERT INTO F_LCO (TFALCO,CFALCO,LINLCO,FECLCO,IMPLCO,CPTLCO,FPALCO,MULLCO,TPVIDLCO,TERLCO) VALUES (?,?,?,?,?,?,?,?,?,?) ";
                         $exec = $this->con->prepare($faclco);
                         $exec->execute($inspg);
+
+                        $inscob = [
+                            $cobro,
+                            $date_format,
+                            $fip['IMPORTE'],
+                            $fip['CPTLCO']
+                        ];
+                        $instcob = "INSERT INTO F_COB (CODCOB,FECCOB IMPCOB CPTCOB) VALUES (?,?,?,?)";
+                        $exec = $this->con->prepare($instcob);
+                        $exec->execute($inscob);
+
                         $count++;
                         $cobro++;
                     }
