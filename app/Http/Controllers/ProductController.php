@@ -934,7 +934,7 @@ class ProductController extends Controller{
             foreach($colsTabProds as $col){ $art[$col] = utf8_encode($art[$col]); }
             $artic[]=$art;
         }
-        $url ="szkdfabd-tkkhkmjbrv.dynamic-m.com:1619/access/public/product/insertpub";
+        $url ="novedadesdio-tkkhkmjbrv.dynamic-m.com:1619/access/public/product/insertpub";
         $ch = curl_init($url);
         $data = json_encode(["products" => $artic]);
         curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
@@ -962,7 +962,7 @@ class ProductController extends Controller{
 
 
         // }
-        $url ="szkdfabd-tkkhkmjbrv.dynamic-m.com:1619/access/public/product/insertpricespub";
+        $url ="novedadesdio-tkkhkmjbrv.dynamic-m.com:1619/access/public/product/insertpricespub";
         $ch = curl_init($url);
         $data = json_encode(["prices" => $precios]);
         curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
