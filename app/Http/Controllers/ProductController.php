@@ -571,7 +571,7 @@ class ProductController extends Controller{
 
         $url ="192.168.90.253:1619/access/public/product/insertpub";
         $ch = curl_init($url);
-        $data = json_encode(["products" => $art]);
+        $data = json_encode(["products" => $artic]);
         curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
         curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_HEADER, 0);
@@ -614,7 +614,7 @@ class ProductController extends Controller{
     public function insertpub(request $request){
         $products =  $request->products;
         foreach($products as $product){
-            $cost = ($product["PCOART"]*1.05);
+            $cost = (floatval($product["PCOART"])*1.05);
             $eanart =$product["EANART"];
             $famart =$product["FAMART"];
             $uppart =$product["UPPART"];

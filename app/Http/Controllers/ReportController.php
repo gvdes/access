@@ -189,7 +189,8 @@ class ReportController extends Controller{
 
             $ventdepmonth = "SELECT
             T_DEP.NOMDEP,
-            SUM(F_FAC.TOTFAC) AS VENTA
+            SUM(F_FAC.TOTFAC) AS VENTA,
+            COUNT(F_FAC.CODFAC) AS TICKETS
             FROM T_DEP
             INNER JOIN F_FAC ON F_FAC.DEPFAC = T_DEP.CODDEP
             WHERE MONTH(F_FAC.FECFAC) = $month AND DAY(F_FAC.FECFAC) <= $day
@@ -205,7 +206,8 @@ class ReportController extends Controller{
 
             $ventdepday = "SELECT
             T_DEP.NOMDEP,
-            SUM(F_FAC.TOTFAC) AS VENTA
+            SUM(F_FAC.TOTFAC) AS VENTA,
+            COUNT(F_FAC.CODFAC) AS TICKETS
             FROM T_DEP
             INNER JOIN F_FAC ON F_FAC.DEPFAC = T_DEP.CODDEP
             WHERE F_FAC.FECFAC = DATE()
