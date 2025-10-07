@@ -1471,7 +1471,7 @@ class TicketController extends Controller{
                     "ticket"=>$tck,
                     "product"=>$products
                 ];
-                return response()->json( mb_convert_encoding($res,'UTF-8'),200);
+                return response()->json($res,200);
         }else{
             return response()->json("El ticket no existe",404);
         }
