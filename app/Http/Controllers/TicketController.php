@@ -1424,7 +1424,7 @@ class TicketController extends Controller{
                 F_ART.CODART AS codigo,
                 F_ART.EANART AS cb,
                 F_ART.CCOART AS corto,
-                F_ART.DLAART AS descripcion,
+                LEFT(F_ART.DLAART, 255) AS descripcion,
                 CInt(F_ART.UPPART) AS pxc,
                  SUM(CInt(F_LFA.CANLFA)) AS cantidad,
                  CDbl(F_LFA.PRELFA) AS precio,
@@ -1440,7 +1440,7 @@ class TicketController extends Controller{
                 F_ART.CODART,
                 F_ART.EANART,
                 F_ART.CCOART,
-                F_ART.DLAART,
+                LEFT(F_ART.DLAART, 255),
                 F_ART.UPPART,
                 F_LFA.PRELFA,
                 0,
@@ -1450,7 +1450,7 @@ class TicketController extends Controller{
                 $exec = $this->con->prepare($prd);
                 $exec->execute();
                 $products = $exec->fetchall(\PDO::FETCH_ASSOC);
-
+                // return $products;
                 if($products){
                     foreach($products as &$product){
                         $variants = "SELECT
@@ -1471,7 +1471,7 @@ class TicketController extends Controller{
                     "ticket"=>$tck,
                     "product"=>$products
                 ];
-                return response()->json($res,200);
+                return response()->json(mb_convert_encoding($res,'UTF-8'),200);
         }else{
             return response()->json("El ticket no existe",404);
         }
