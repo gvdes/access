@@ -346,7 +346,7 @@ class ClientOrderController extends Controller{
                 return response()->json($res,401);
             }else{
 
-                $terminal = "SELECT *  FROM T_TER WHERE DESTER LIKE '%CAJAUNO%'";
+                $terminal = "SELECT *  FROM T_TER WHERE CODTER  = ". $fil['TERFAC'];
                 $exec = $this->con->prepare($terminal);
                 $exec->execute();
                 $codter = $exec->fetch(\PDO::FETCH_ASSOC);
@@ -359,7 +359,7 @@ class ClientOrderController extends Controller{
                 $maxcob = $exec->fetch(\PDO::FETCH_ASSOC);
                 $cobro = $maxcob['maxi'] + 1;
 
-                $codmax = "SELECT MAX(CODFAC) as maxi FROM F_FAC WHERE TIPFAC = '1'";
+                $codmax = "SELECT MAX(CODFAC) as maxi FROM F_FAC WHERE TIPFAC = "."'".$fil['TIPFAC']."'";
                 $exec = $this->con->prepare($codmax);
                 $exec->execute();
                 $max = $exec->fetch(\PDO::FETCH_ASSOC);
@@ -403,7 +403,7 @@ class ClientOrderController extends Controller{
                     $column = ["TIPFAC","CODFAC","REFFAC","FECFAC", "ALMFAC","AGEFAC","CLIFAC","CNOFAC","CDOFAC","CPOFAC","CCPFAC","CPRFAC","TELFAC","NET1FAC","BAS1FAC","TOTFAC","FOPFAC","OB1FAC","VENFAC","HORFAC","USUFAC","USMFAC","TIVA2FAC","TIVA3FAC","EDRFAC","FUMFAC","BCOFAC","TPVIDFAC","ESTFAC","TERFAC","DEPFAC","EFEFAC","CAMFAC","EFSFAC"];
 
                     $factura = [
-                        "1",
+                        $fil['TIPFAC'],
                         $codigo,
                         "IVATCK-".$ticket,
                         $date_format,
@@ -468,7 +468,7 @@ class ClientOrderController extends Controller{
                     }
                     $column = ["TIPFAC","CODFAC","REFFAC", "FECFAC", "ALMFAC", "AGEFAC", "CLIFAC", "CNOFAC", "CDOFAC", "CPOFAC", "CCPFAC", "CPRFAC", "TELFAC", "NET1FAC", "BAS1FAC", "TOTFAC", "FOPFAC", "OB1FAC", "VENFAC", "HORFAC", "USUFAC", "USMFAC", "TIVA2FAC", "TIVA3FAC", "EDRFAC", "FUMFAC", "BCOFAC",  "TPVIDFAC",  "ESTFAC",  "TERFAC",  "DEPFAC",  "EFEFAC",  "CAMFAC"];
                     $factura = [
-                        "1",
+                        $fil['TIPFAC'],
                         $codigo,
                         "IVATCK-".$ticket,
                         $date_format,
@@ -524,10 +524,10 @@ class ClientOrderController extends Controller{
                 $exec = $this->con->prepare($sql);
                 $exec -> execute($factura);
 
-                $folio = "1"."-".str_pad($codigo, 6, "0", STR_PAD_LEFT);//se obtiene el folio de la factura
+                $folio = $fil['TIPFAC']."-".str_pad($codigo, 6, "0", STR_PAD_LEFT);//se obtiene el folio de la factura
                 $header['ticket'] = $folio;
                 $insva = [
-                    1,
+                    $fil['TIPFAC'],
                     $codigo,
                     1,
                     "IVA",
@@ -556,7 +556,7 @@ class ClientOrderController extends Controller{
 
                     $faclco = "INSERT INTO F_LCO (TFALCO,CFALCO,LINLCO,FECLCO,IMPLCO,CPTLCO,FPALCO,MULLCO,TPVIDLCO,TERLCO) VALUES (?,?,?,?,?,?,?,?,?,?) ";
                     $exec = $this->con->prepare($faclco);
-                    $exec->execute([1,$codigo,$contador,$date_format,$valfpa,$codigocobro['DESFPA'],$codfpa,$cobro,$idterminal,$codter['CODTER']]);
+                    $exec->execute([$fil['TIPFAC'],$codigo,$contador,$date_format,$valfpa,$codigocobro['DESFPA'],$codfpa,$cobro,$idterminal,$codter['CODTER']]);
 
                     $inscob = "INSERT INTO F_COB (CODCOB,FECCOB,IMPCOB,CPTCOB) VALUES (?,?,?,?)";
                     $exec = $this->con->prepare($inscob);
