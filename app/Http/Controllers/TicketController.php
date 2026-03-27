@@ -793,8 +793,9 @@ class TicketController extends Controller{
     }
 
     public function vales(Request $request){
-        $cliente = $request->price;
-        $select = "SELECT CODANT, IMPANT  FROM  F_ANT WHERE CLIANT = $cliente AND ESTANT = 0";
+        $cliente = $request->price == 0 ? [1,2,3,4] : $request->price;
+        $ids = implode(',', $cliente);
+        $select = "SELECT CODANT, IMPANT  FROM  F_ANT WHERE CLIANT IN ($ids) AND ESTANT = 0";
         $exec = $this->con->prepare($select);
         $exec->execute();
         $vales = $exec->fetchall(\PDO::FETCH_ASSOC);
