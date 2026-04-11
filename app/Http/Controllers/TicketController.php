@@ -793,7 +793,7 @@ class TicketController extends Controller{
     }
 
     public function vales(Request $request){
-        $cliente = $request->price == 0 ? [1,2,3,4] : $request->price;
+        $cliente = $request->price == 0 ? [1,2,3,4] : (array) [$request->price];
         $ids = implode(',', $cliente);
         $select = "SELECT CODANT, IMPANT  FROM  F_ANT WHERE CLIANT IN ($ids) AND ESTANT = 0";
         $exec = $this->con->prepare($select);
