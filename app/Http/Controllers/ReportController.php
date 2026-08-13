@@ -253,7 +253,7 @@ class ReportController extends Controller{
             F_LCO.TFALCO&'-'&F_LCO.CFALCO AS TICKET,
             F_LCO.FECLCO AS FECHA,
             MAX(IIF(F_LCO.FPALCO = 'EFE','OK' ,'')) AS EFECTIVO,
-            MAX(IIF((F_LCO.FPALCO = 'TBA' OR  F_LCO.FPALCO = 'TSC' OR F_LCO.FPALCO = 'TSA'),F_LCO.IMPLCO ,'')) AS TARJETAS,
+            MAX(IIF((F_LCO.FPALCO = 'TBA' OR  F_LCO.FPALCO = 'TSC' OR F_LCO.FPALCO = 'TSA' OR F_LCO.FPALCO = 'MPG'),F_LCO.IMPLCO ,'')) AS TARJETAS,
             MAX(IIF((F_LCO.FPALCO = 'TDB' OR  F_LCO.FPALCO = 'TDA' OR F_LCO.FPALCO = 'TDS'), F_LCO.IMPLCO,'')) AS TRANSFERENCIAS,
             MAX(IIF(F_LCO.FPALCO = 'C30', F_LCO.IMPLCO,'')) AS CREDITOS,
             MAX(IIF(F_LCO.FPALCO = '[V]', F_LCO.IMPLCO,'')) AS VALES
@@ -447,10 +447,10 @@ class ReportController extends Controller{
         T_TER.DESTER AS TERMINAL,
         F_LCO.TFALCO&'-'&F_LCO.CFALCO AS TICKET,
         F_LCO.FECLCO AS FECHA,
-        MAX(IIF((F_LCO.FPALCO = 'TBA' OR  F_LCO.FPALCO = 'TSC' OR F_LCO.FPALCO = 'TSA'),F_LCO.IMPLCO ,'')) AS TARJETAS
+        MAX(IIF((F_LCO.FPALCO = 'TBA' OR  F_LCO.FPALCO = 'TSC' OR F_LCO.FPALCO = 'TSA' OR F_LCO.FPALCO = 'MPG'),F_LCO.IMPLCO ,'')) AS TARJETAS
         FROM F_LCO
         INNER JOIN T_TER ON T_TER.CODTER = F_LCO.TERLCO
-        WHERE FECLCO =  "."#".$date."#"." AND (F_LCO.FPALCO = 'TBA' OR  F_LCO.FPALCO = 'TSC' OR F_LCO.FPALCO = 'TSA')
+        WHERE FECLCO =  "."#".$date."#"." AND (F_LCO.FPALCO = 'TBA' OR  F_LCO.FPALCO = 'TSC' OR F_LCO.FPALCO = 'TSA' OR F_LCO.FPALCO = 'MPG')
         GROUP BY
         T_TER.DESTER,
         TFALCO&'-'&CFALCO,
@@ -551,4 +551,24 @@ class ReportController extends Controller{
         return response()->json($terminales, 200);
     }
 
+    public function getWithdrawal(){
+        $select = "SELECT
+            F_RET.CODRET,
+            F_RET.CAJRET,
+            T_TER.DESTER,
+            F_RET.FECRET,
+            F_RET.HORRET,
+            F_RET.IMPRET,
+            F_PRO.NOFPRO
+        FROM ((F_RET
+            LEFT JOIN T_TER ON T_TER.CODTER = F_RET.CAJRET)
+            LEFT JOIN F_PRO ON F_RET.PRORET = F_PRO.CODPRO)
+        WHERE F_RET.FECRET>=#2026-01-01#;
+        ";
+        $exec = $this->con->prepare($select);
+        $exec->execute();
+        $res = $exec->fetchall(\PDO::FETCH_ASSOC);
+
+        return response()->json($res, 200);
+    }
 }
