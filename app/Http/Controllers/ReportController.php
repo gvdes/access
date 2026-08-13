@@ -551,4 +551,24 @@ class ReportController extends Controller{
         return response()->json($terminales, 200);
     }
 
+    public function getWithdrawal(){
+        $select = "SELECT
+            F_RET.CODRET,
+            F_RET.CAJRET,
+            T_TER.DESTER,
+            F_RET.FECRET,
+            F_RET.HORRET,
+            F_RET.IMPRET,
+            F_PRO.NOFPRO
+        FROM ((F_RET
+            LEFT JOIN T_TER ON T_TER.CODTER = F_RET.CAJRET)
+            LEFT JOIN F_PRO ON F_RET.PRORET = F_PRO.CODPRO)
+        WHERE F_RET.FECRET>=#2026-01-01#;
+        ";
+        $exec = $this->con->prepare($select);
+        $exec->execute();
+        $res = $exec->fetchall(\PDO::FETCH_ASSOC);
+
+        return response()->json($res, 200);
+    }
 }
