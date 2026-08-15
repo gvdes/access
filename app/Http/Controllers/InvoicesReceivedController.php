@@ -133,4 +133,19 @@ class InvoicesReceivedController extends Controller{
         });
         return response()->json($rows);
     }
+
+    public function getEntradas(){
+        $query = "SELECT
+        ARTLFR AS sku,
+        SUM(CANLFR) AS cantidad
+        FROM F_FRE
+        LEFT JOIN F_LFR ON F_LFR.TIPLFR = F_FRE.TIPFRE AND F_LFR.CODLFR = F_FRE.CODFRE
+        GROUP BY F_LFR.ARTLFR
+        ";
+        $exec = $this->con->prepare($query);
+        $exec->execute([$_client]);
+        $res = $exec->fetch(\PDO::FETCH_ASSOC);
+
+        return response()->json($res, 200);
+    }
 }

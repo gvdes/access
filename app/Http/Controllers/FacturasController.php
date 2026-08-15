@@ -143,4 +143,24 @@ class ClientOrderController extends Controller{
             return 1;
         }
     }
+
+    public function getSalidas(Request $request){
+        $_client = $request->_client;
+        if($_client){
+            $query = "SELECT
+            ARTLFA AS sku,
+            SUM(CANLFA) AS cantidad
+            FROM F_FAC
+            LEFT JOIN F_LFA ON F_LFA.TIPLFA = F_FAC.TIPFAC AND F_LFA.CODLFA = F_FAC.CODFAC
+            WHERE F_FAC.CLIFAC = ?
+            GROUP BY F_LFA.ARTLFA
+            ";
+            $exec = $this->con->prepare($query);
+            $exec->execute([$_client]);
+            $res = $exec->fetch(\PDO::FETCH_ASSOC);
+
+            return response()->json($res, 200);
+        }
+        return response()->json(["msg" => "Ingrese tienda", "status" => 500]);        
+    }
 }
