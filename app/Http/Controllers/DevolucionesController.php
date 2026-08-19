@@ -74,4 +74,24 @@ class DevolucionesController extends Controller{
         $result = $exec->fetch(\PDO::FETCH_ASSOC);
         return intval($result["Expr1000"]);
     }
+
+    public function getTraspasos(Request $request){
+        $_provider = $request->_provider;
+        if($_provider){
+            $query = "SELECT
+            ARTLFD AS sku,
+            SUM(CANLFD) AS cantidad
+            FROM F_FRD
+            LEFT JOIN F_LFD ON F_LFD.TIPLFD = F_FRD.TIPFRD AND F_LFD.CODLFD = F_FRD.CODFRD
+            WHERE F_FRD.PROFRD = ?
+            GROUP BY F_LFD.ARTLFD
+            ";
+            $exec = $this->con->prepare($query);
+            $exec->execute([$_provider]);
+            $res = $exec->fetch(\PDO::FETCH_ASSOC);
+    
+            return response()->json($res, 200);
+        }
+        return response()->json(["msg" => "Ingrese tienda", "status" => 500]);     
+    }
 }
