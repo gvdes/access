@@ -75,7 +75,7 @@ class DevolucionesController extends Controller{
         return intval($result["Expr1000"]);
     }
 
-    public function getTraspaso(Request $request){
+    public function getTraspasos(Request $request){
         $_provider = $request->_provider;
         if($_provider){
             $query = "SELECT

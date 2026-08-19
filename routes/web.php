@@ -183,4 +183,8 @@ $router->group(['prefix' => 'reports'], function () use ($router){
     $router->post('/filter', 'ReportController@filter');
     $router->post('/getCashCob', 'ReportController@getCashCob');
     $router->post('/OpenCash', 'ReportController@OpenBoxes');
+
+    $router->get('/getTraspasos', 'DevolucionesController@getTraspasos');
+    $router->get('/getSalidas', 'FacturasController@/getSalidas');
+    $router->get('/getEntradas', 'InvoiceReceivedController@getEntradas');
 });
